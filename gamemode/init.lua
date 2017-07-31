@@ -98,6 +98,8 @@ function GM:Initialize()
 	util.AddNetworkString("req_room_from_server")
 	util.AddNetworkString("rec_room_from_server")
 	util.AddNetworkString("create_ragdoll")
+	util.AddNetworkString("req_scores")
+	util.AddNetworkString("rec_scores")
 	
 	for k, m in pairs(males) do
 		util.PrecacheModel(m)
@@ -142,6 +144,23 @@ function GM:SendHudMessage(ply, msg, ttl)
 end
 
 
+net.Receive("req_scores", function (len, ply) 
+	
+	local playas = player.GetAll()
+	local plyCount = #playas
+	
+	net.Start("rec_scores")
+		net.WriteInt(plyCount, 32)
+		
+		for k, oPly in pairs(playas) do
+			net.WriteString(oPly:Nick())
+			net.WriteVector(Vector(oPly.mazesRan, oPly.mazesCompleted, oPly.mazesIncomplete))
+			net.WriteInt(oPly.credits, 32)
+		end
+	
+	net.Send(ply)
+	
+end)
 
 net.Receive("set_player_model", function (len, ply) 
 	
@@ -323,6 +342,7 @@ function GM:AwardPrizes()
 		if IsValid(ply) then
 			ply:ChatPrint("You didn't finish, but you still get " .. tostring(dnfPrize) .. " credits for trying.")
 			self:ModifyPlayerCredit(ply, dnfPrize)
+			ply.mazesIncomplete = ply.mazesIncomplete + 1
 		end
 		
 	end
@@ -336,6 +356,7 @@ function GM:RegisterPlayerFinished( ply )
 	if ply && IsValid(ply) && ply:IsPlayer() then
 		
 		print("Registering " .. tostring(ply) .. " finished the maze")
+		ply.mazesCompleted = ply.mazesCompleted + 1
 		playersInRound[ply.rIndex] = nil
 		
 		return table.insert(finishedPlayers, ply)
@@ -346,12 +367,13 @@ end
 
 function GM:RegisterPlayerForRound( ply )
 	
-	if ply && IsValid(ply) && ply:IsPlayer() then
+	if IsValid(ply) && ply:IsPlayer() then
 		
 		print("Registering " .. tostring(ply) .. " for this round")
 		
 		prizePool = prizePool + 1000
 		ply.rIndex = table.insert(playersInRound, ply)
+		ply.mazesRan = ply.mazesRan + 1
 	
 	end
 
@@ -389,13 +411,18 @@ end
 
 function GM:SavePlayerInfo(ply)
 	
-	local modelString = ply:SetPData("mm_ply_model", ply:GetModel())
+	ply:SetPData("mm_ply_model", ply:GetModel())
 	
-	local plyCredits = ply:SetPData("mm_ply_credits", ply.credits)
+	ply:SetPData("mm_ply_credits", ply.credits)
 	
-	local plyColor = ply:SetPData("mm_ply_color", ply:GetPlayerColor())
+	ply:SetPData("mm_ply_color", ply:GetPlayerColor())
 	
-	local plyMaxHealth = ply:SetPData("mm_ply_max_health", ply:GetMaxHealth())
+	ply:SetPData("mm_ply_max_health", ply:GetMaxHealth())
+	
+	ply:SetPData("mm_ply_mazes_ran", ply.mazesRan)
+	ply:SetPData("mm_ply_mazes_completed", ply.mazesCompleted)
+	ply:SetPData("mm_ply_mazes_incomplete", ply.mazesIncomplete)
+	
 
 end
 
@@ -455,6 +482,12 @@ function GM:LoadPlayerInfo(ply)
 		ply:SetMaxHealth(plyMaxHealth)
 		
 	end
+	
+	ply.mazesRan = tonumber(ply:GetPData("mm_ply_mazes_ran", 0)) or 0
+	ply.mazesCompleted = tonumber(ply:GetPData("mm_ply_mazes_completed", 0)) or 0
+	ply.mazesIncomplete = tonumber(ply:GetPData("mm_ply_mazes_incomplete", 0)) or 0
+	
+	--PrintTable(ply:GetTable())
 	
 	
 end
@@ -1048,6 +1081,7 @@ function GM:EnterMaze( ply )
 			net.Send(ply)
 			
 			self:RegisterPlayerForRound( ply )
+			
 			
 			--- Pick Random Spawn, not occupied
 			local spawnEnt = self:PlayerSelectSpawn(ply)

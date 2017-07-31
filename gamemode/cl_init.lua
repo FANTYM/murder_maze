@@ -25,9 +25,11 @@ canNextSound = CurTime()
 lastNum = -1
 storeMenu = nil
 playerMenu = nil
+scoreMenu = nil
 
 hudQueue = {}
 drawBoxes = {}
+scores = {}
 
 compassBack = Material("/mm/compass_back.vmt")
 compassPointer = Material("/mm/compass_pointer.vmt")
@@ -83,6 +85,20 @@ miniMapMat = CreateMaterial("mmmm_hud_material", "UnlitGeneric",
 							})
 
 
+
+net.Receive("rec_scores", function (len, ply) 
+	
+	local plyCount = net.ReadInt(32)
+		
+	for i = 1, plyCount do
+		local newScore = {}		
+			  newScore.nick = net.ReadString()
+			  newScore.mazeStats = net.ReadVector()  
+			  newScore.credits = net.ReadInt(32)
+		table.insert(scores, newScore)
+	end
+	
+end)
 
 net.Receive( "rec_room_from_server", function(len, ply)
 									
@@ -1064,4 +1080,211 @@ function GM:CalcView(ply, origin, angles, fov, znear, zfar )
 
 	end
 			
+end
+
+function GM:ScoreboardShow()
+	
+	net.Start("req_scores")
+	net.SendToServer()
+	
+	scores = {}
+	
+	timer.Simple(0.1, doScoreboard)
+	--return false	
+
+end
+
+function doScoreboard()
+		
+	if LocalPlayer():KeyDown(IN_SCORE) && #scores > 0 then
+		
+		if !scoreMenu then
+		
+			scoreMenu = vgui.Create("DPanel")
+			scoreMenu:SetSize(ScrW() * 0.5, ScrH() * 0.666)
+			--scoreMenu:SetPaintedManually(true)
+			--scoreMenu:SetVerticalScrollbarEnabled(true)
+			--scoreMenu:SetBackgroundBlur( true )
+			--scoreMenu:SetSizable(false)
+			--scoreMenu:SetDraggable(false)
+			--scoreMenu:SetTitle("")
+			--scoreMenu:ShowCloseButton(false)
+			--scoreMenu:SetDeleteOnClose(true)
+	
+			--scoreMenu:SetColor(Color(0,0,0,255))
+			function scoreMenu:Paint()
+				
+				draw.RoundedBox(6, 0, 0, self:GetWide(), self:GetTall(), Color(64,64,64,128))
+			
+			end
+			
+			local ySpace = 24
+			local yPad = 8
+			local xPad = 40
+			
+			local x = xPad
+			local y = yPad + 16
+			
+			local nickCol = 256
+			local runCol = 160
+			local compCol = 160
+			local incompCol = 160
+			local creditCol = 160
+			
+			local scoresFont = "Trebuchet24"
+			
+			local plyNick = vgui.Create("DLabel")
+				  plyNick:SetParent(scoreMenu)
+				  plyNick:SetFont(scoresFont)
+				  plyNick:SetSize(nickCol, ySpace * 2)
+				  plyNick:SetPos(x,y)
+				  plyNick:SetText(makeLen("\nPlayer", 30, " ", false))
+				  plyNick:SetTextColor(Color(255,255,255,255))
+				  
+				  
+			local lX,lY = plyNick:GetPos()
+			
+			x = x + plyNick:GetWide() + xPad
+			
+			local plyRan = vgui.Create("DLabel")
+				  plyRan:SetParent(scoreMenu)
+				  plyRan:SetFont(scoresFont)
+				  plyRan:SetSize(runCol, ySpace * 2)
+				  plyRan:SetPos(x,y)
+				  plyRan:SetText(makeLen("Total\nRuns", 5, " ", false))
+				  plyRan:SetTextColor(Color(255,255,255,255))
+				  lX,lY = plyRan:GetPos()
+				  
+			x = x + plyRan:GetWide() + xPad
+				  
+			local plyComp = vgui.Create("DLabel")
+				  plyComp:SetParent(scoreMenu)
+				  plyComp:SetFont(scoresFont)
+				  plyComp:SetSize(compCol, ySpace * 2)
+				  plyComp:SetPos(x,y)
+				  plyComp:SetText(makeLen("Completed\nRuns", 5, " ", false))
+				  plyComp:SetTextColor(Color(0,255,0,255))
+				  lX,lY = plyComp:GetPos()
+
+			x = x + plyComp:GetWide() + xPad
+			
+			local plyIncomp = vgui.Create("DLabel")
+				  plyIncomp:SetParent(scoreMenu)
+				  plyIncomp:SetFont(scoresFont)
+				  plyIncomp:SetSize(incompCol, ySpace * 2)
+				  plyIncomp:SetPos(x,y)
+				  plyIncomp:SetText(makeLen("Incomplete\nRuns", 5, " ", false))
+				  plyIncomp:SetTextColor(Color(255,0,0,255))
+				  lX,lY = plyIncomp:GetPos()
+			
+			x = x + plyIncomp:GetWide() + xPad
+			
+			local plyCredit = vgui.Create("DLabel")
+				  plyCredit:SetParent(scoreMenu)
+				  plyCredit:SetFont(scoresFont)
+				  plyCredit:SetSize(creditCol, ySpace * 2)
+				  plyCredit:SetPos(x,y)
+				  plyCredit:SetText(makeLen("Credits", 5, " ", false))
+				  plyCredit:SetTextColor(Color(255,255,0,255))
+				  
+				  lX,lY = plyNick:GetPos()
+				  
+			y = y + yPad + (ySpace * 2)
+			x = xPad
+			
+			local divider = vgui.Create("DShape")
+				  divider:SetType("Rect")
+				  divider:SetParent(scoreMenu)
+				  divider:SetPos(x,y)
+				  divider:SetColor(Color(160,160,160,196))
+			
+			y = y + (yPad * 2)
+			
+			for k, score in pairs(scores) do
+				plyNick = vgui.Create("DLabel")
+				plyNick:SetParent(scoreMenu)
+				plyNick:SetFont(scoresFont)
+				plyNick:SetSize(nickCol, ySpace)
+				plyNick:SetPos(x,y)
+				plyNick:SetText(makeLen(score.nick, 30, " ", false))
+				plyNick:SetTextColor(Color(255,255,255,224))
+					  
+				lX,lY = plyNick:GetPos()
+				
+				x = x + plyNick:GetWide() + xPad
+				
+				plyRan = vgui.Create("DLabel")
+				plyRan:SetParent(scoreMenu)
+				plyRan:SetFont(scoresFont)
+				plyRan:SetSize(runCol, ySpace)
+				plyRan:SetPos(x,y)
+				plyRan:SetText(makeLen(score.mazeStats.x, 5, " ", false))
+				plyRan:SetTextColor(Color(255,255,255,224))
+				lX,lY = plyRan:GetPos()
+					  
+				x = x + plyRan:GetWide() + xPad
+					  
+				plyComp = vgui.Create("DLabel")
+				plyComp:SetParent(scoreMenu)
+				plyComp:SetFont(scoresFont)
+				plyComp:SetSize(compCol, ySpace)
+				plyComp:SetPos(x,y)
+				plyComp:SetText(makeLen(score.mazeStats.y, 5, " ", false))
+				plyComp:SetTextColor(Color(0,255,0,224))
+				lX,lY = plyComp:GetPos()
+
+				x = x + plyComp:GetWide() + xPad
+				
+				plyIncomp = vgui.Create("DLabel")
+				plyIncomp:SetParent(scoreMenu)
+				plyIncomp:SetFont(scoresFont)
+				plyIncomp:SetSize(incompCol, ySpace)
+				plyIncomp:SetPos(x,y)
+				plyIncomp:SetText(makeLen(score.mazeStats.z, 5, " ", false))
+				plyIncomp:SetTextColor(Color(255,0,0,224))
+				lX,lY = plyIncomp:GetPos()
+				
+				x = x + plyIncomp:GetWide() + xPad
+				
+				plyCredit = vgui.Create("DLabel")
+				plyCredit:SetParent(scoreMenu)
+				plyCredit:SetFont(scoresFont)
+				plyCredit:SetSize(creditCol, ySpace)
+				plyCredit:SetPos(x,y)
+				plyCredit:SetText(makeLen(score.credits, 5, " ", false))
+				plyCredit:SetTextColor(Color(255,255,0,224))
+				lX,lY = plyNick:GetPos()
+					  
+				y = y + yPad + ySpace
+				x = xPad
+			end
+			
+			scoreMenu:SizeToChildren(true,true)
+			
+			scoreMenu:SetSize(scoreMenu:GetWide() + xPad, scoreMenu:GetTall() + yPad)
+			
+			scoreMenu:SetPos(ScrW() * 0.5 - (scoreMenu:GetWide() * 0.5),
+							 ScrH() * 0.5 - (scoreMenu:GetTall() * 0.5))
+			
+			--scoreMenu:SetPaintBackground(false)
+			divider:SetSize(scoreMenu:GetWide() - (xPad * 2), yPad * 0.5)
+			
+		end
+		
+	else
+		
+		if scoreMenu then
+			if scoreMenu.Close then
+				scoreMenu:Close()
+			elseif scoreMenu.Remove then
+				scoreMenu:Remove()
+			end
+			scoreMenu = nil
+			return
+		end
+		
+	end
+
+	timer.Simple(0.1, doScoreboard)
+	
 end
