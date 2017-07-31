@@ -181,7 +181,8 @@ function GM:StartCommand(ply, cmd)
 	
 	if !self.roundEnt then return end
 	
-	if ply.inMaze && self.roundEnt:GetCurrentTitle() == "pre" then
+	if ply.inMaze && self.roundEnt:GetCurrentTitle() == "pre" ||
+	   ply.snared then
 		
 		cmd:SetMouseX(0)
 		cmd:SetMouseY(0)		
