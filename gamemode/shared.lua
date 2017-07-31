@@ -64,20 +64,13 @@ dirPairs = {}
 	dirPairs["n"] = "s"
 	dirPairs["s"] = "n"
 	
-
 GM.curMaze = {}
 	
-function GM:EntityKeyValue( ent, key, value )
-
-	
-end
-
 function GM:PlayerNoClip( pl, on )
 	
 	return !pl:IsBot() || pl:IsAdmin()
 	
 end
-
 
 function getSign(what)
 	
@@ -108,14 +101,9 @@ function makeValueSmoother(startVal, endVal, arriveTime, smoothFunc)
 	
 	function nSmoother:GetValue()
 		
-		----print(" ")
-		----print(smoothFunc)
-		----print(CurTime())
-		
 		self.curDelta = CurTime() - self.startTime
 		self.curPerc = self.curDelta / self.aTime
 		self.lastVal = (( 1 - self.curPerc ) * self.sVal) + (self.curPerc * self.eVal)
-		----PrintTable(self)
 		
 		if self.sDir > 0 then
 			
@@ -130,8 +118,7 @@ function makeValueSmoother(startVal, endVal, arriveTime, smoothFunc)
 		return self.lastVal
 		
 	end
-	
-	
+
 	return nSmoother
 
 end
@@ -141,31 +128,23 @@ function GetPlayerMapPos(ply)
 	
 	plyPos = ply:GetPos() + Vector(0,0,64)
 	
-	----print("GetPlayerMapPos( " .. tostring(ply) .. " ) @ " .. tostring(plyPos))
-	
 	local result = Vector( math.floor((plyPos.x / blockSizes.x) + 15), 
 						   math.floor((plyPos.y / blockSizes.y) + 15), 
 						   math.abs(math.floor( plyPos.z / blockSizes.z)) )
-	
-	----print("mapPos: " .. tostring(result))
-	
+		
 	return result
 						   
 end
 
 function GetBlockWorldPos( pos )
-	
 			
 	return Vector( (pos.x - 15) * blockSizes.x,
 				   (pos.y - 15) * blockSizes.y,
 				   (pos.z) * blockSizes.z )
-	
-	   
+		   
 end
 
-function IsInMap( pos )
-	
-	----print("IsInMap( " .. tostring(pos) .. " )")
+function IsInMaze( pos )
 	
 	if ( pos.x >= 0 && pos.x < curX ) &&
 	   ( pos.y >= 0 && pos.y < curY ) &&
@@ -198,50 +177,20 @@ function makeLen(whatStr, desLen, padChar, addBefore)
 
 end
 
-
-local lastFinishMoveTime = CurTime()
-local lastAngle 
-
---function GM:FinishMove( ply, moveData ) 
---function GM:SetupMove( ply, moveData, cmd )
 function GM:StartCommand(ply, cmd)
 	
 	if !self.roundEnt then return end
 	
 	if ply.inMaze && self.roundEnt:GetCurrentTitle() == "pre" then
 		
-		if !lastAngle then
-		
-			lastAngle = ply:EyeAngles()
-			
-		end
-		
-		local fmDelta = CurTime() - lastFinishMoveTime
-		----print("fmDelta: " .. tostring(fmDelta))
-		lastFinishMoveTime = CurTime()
-		--ply:SetVelocity(Vector(0,0,0))
-		--ply:SetPos(ply:GetPos())
-		--ply:SetEyeAngles(ply:EyeAngles() )
-		
-		--moveData:SetAbsMoveAngles(Angle(0,0,0))
-		--moveData:SetAngles(Angle(0,0,0))
-		--moveData:SetForwardSpeed(0)
-		--moveData:SetOrigin(ply:GetPos())
-		--moveData:SetSideSpeed(0)
-		--moveData:SetUpSpeed(0)
-		--
 		cmd:SetMouseX(0)
-		cmd:SetMouseY(0)
-		
-		cmd:SetViewAngles(lastAngle)
+		cmd:SetMouseY(0)		
+		cmd:SetViewAngles(Angle(0,0,0))
 		cmd:ClearButtons()
 		cmd:ClearMovement()
 		
-		
-		
 	end
 	
-	lastAngle = nil
 end
 
 function newMazeCell()
@@ -264,7 +213,6 @@ end
 
 function GM:drawMapToString(level, ply, mazeData)
 	
-	--print("drawMapToString( " .. tostring(level) .. ", " .. tostring(ply) .. " )")
 	local dirs = {"n", "w", "u", "d", "e", "s"}
 	
 	local z = 0
@@ -307,9 +255,7 @@ function GM:drawMapToString(level, ply, mazeData)
 				if !mazeData[z][x + 1][y]  then
 					mazeData[z][x + 1][y] = newMazeCell()
 				end
-				
-				--PrintTable(self.curMaze[z][x + 1][y])
-				
+								
 				if scanStage == -1 then
 					
 					if SERVER then
@@ -331,8 +277,7 @@ function GM:drawMapToString(level, ply, mazeData)
 						outStr = outStr .. "   "
 					end
 					x = x + 1
-					--outStr = outStr .. "+"
-					--print("z: " .. tostring(z) .. " x: " .. tostring(x) .. " y: " .. tostring(y))
+					
 					if mazeData[z][x][y].n then
 						if mazeData[z][x][y].visited || SERVER then
 							outStr = outStr .. "/ \\"
@@ -385,7 +330,7 @@ function GM:drawMapToString(level, ply, mazeData)
 								outStr = outStr .. " "
 							end
 						else
-							--print("not u/d")
+						
 							if mazeData[z][x][y].visited || SERVER then
 								outStr = outStr .. " "
 							else
@@ -410,7 +355,6 @@ function GM:drawMapToString(level, ply, mazeData)
 					
 				elseif scanStage == 2 then
 				
-					--outStr = outStr .. " "
 					if x == -1 then
 						outStr = outStr .. "   "
 					end
@@ -445,8 +389,6 @@ function GM:drawMapToString(level, ply, mazeData)
 		
 	end
 
-	--print(outStr)
-	
 	return outStr
 	
 end

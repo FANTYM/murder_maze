@@ -1,4 +1,3 @@
-
 include( "shared.lua" )
 
 function ENT:Initialize()
@@ -50,47 +49,6 @@ function ENT:Initialize()
 	-- Open/Close tracking variable
 	self.mapIsOpen = false
 	
-end
-
--- Debug function -- prints all self. variables
-function ENT:PrintVariables()
-
-	--print("Variables of " .. tostring(self))
-	
-	-- Entities to render and the render offset
-	--print("self.renderEnts:")
-	--PrintTable(self.renderEnts)
-	
-	--print("self.drawOffset: " .. tostring(self.drawOffset))
-	
-	-- Map's current scale, and map's full scale
-	--print("self.mapScale: " .. tostring(self.mapScale))
-	--print("self.mapFullScale: " .. tostring(self.mapFullScale))
-	
-	-- Map drawing variables
-	--print("self.beamSectionStart: " .. tostring(self.beamSectionStart))
-	--print("self.beamSectionEnd: " .. tostring(self.beamSectionEnd))
-	--print("self.beamWidth: " .. tostring(self.beamWidth))
-	--print("self.mapMin: " .. tostring(self.mapMin))
-	--print("self.mapMax: " .. tostring(self.mapMax))
-	
-	--print("self.corner: ")
-	--PrintTable(self.corners)
-	
-	--print("self.scanDir: " .. tostring(self.scanDir))
-	--print("self.scanPerc: " .. tostring(self.scanPerc))
-	--print("self.invPerc: " .. tostring(self.invPerc))
-	
-	-- Timing Variables
-	--print("self.deployTime: " .. tostring(self.deployTime))
-	--print("self.closeTime: " .. tostring(self.closeTime))
-	--print("self.lastThink: " .. tostring(self.lastThink))
-	--print("self.timeMarker: " .. tostring(self.timeMarker))
-	--print("self.thinkDelta: " .. tostring(self.thinkDelta))
-	
-	-- Open/Close tracking variable
-	--print("self.mapIsOpen: " .. tostring(self.mapIsOpen))
-
 end
 
 -- It's a holographics(kinda) map, so draw translucent
@@ -269,7 +227,7 @@ function ENT:DrawTranslucent()
 		-- Draw plyMat (sprite) for each player in the map, in their color
 		render.SetMaterial(self.plyMat)
 		for k, ply in pairs(player.GetAll()) do
-			if IsInMap(GetPlayerMapPos(ply)) then
+			if IsInMaze(GetPlayerMapPos(ply)) then
 				
 				local plyClr = ply:GetPlayerColor()
 				render.DrawSprite( self:GetPos() + (((ply:GetPos() - self.drawOffset ) + Vector(0,0,48)) * self.mapScale), 120 * self.mapScale, 120 * self.mapScale, Color(plyClr.r * 255, plyClr.g * 255, plyClr.b * 255, 255) )
@@ -384,5 +342,4 @@ function ENT:Think()
 	
 	end
 	
-	--self:NextThink(CurTime() + 0.25)
 end

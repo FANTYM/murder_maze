@@ -1,15 +1,44 @@
 include( 'shared.lua' )
+
 DEFINE_BASECLASS( "gamemode_base")
 
-in_render = false
-draw_player = true
-mazeZero = Vector(0,0,0)
---mapIsOpen = false  -- moved to mini_map ent
 inMaze = false
+in_render = false
+storeIsOpen = false
+playerIsOpen = false 
+updateMiniMap = true
+
+mapSize = Vector(0,0,0)
+mazeZero = Vector(0,0,0)
+lastPlyMapPos = Vector(0,0,0)
+compassAngle = makeValueSmoother(0, 0, 0.25)
+
+lastHD = CurTime()
+
+exitCamPos = nil
+exitEnt = nil
+
+hudRTSize = 512
+hudRTName = "mini_map_hud_texture" .. tostring(CurTime())
+
+canNextSound = CurTime()
+lastNum = -1
+storeMenu = nil
+playerMenu = nil
 
 hudQueue = {}
-mapSize = Vector(0,0,0)
-compassAngle = makeValueSmoother(0, 0, 0.25)
+drawBoxes = {}
+
+compassBack = Material("/mm/compass_back.vmt")
+compassPointer = Material("/mm/compass_pointer.vmt")
+miniMapHudParts = {}
+miniMapHudParts.bg 		= Material("/mm/hud_map_basic.vmt")
+miniMapHudParts.ud  	= Material("/mm/hud_map_stairs.vmt")
+miniMapHudParts.n  		= Material("/mm/hud_map_door_n.vmt")
+miniMapHudParts.s  		= Material("/mm/hud_map_door_s.vmt")
+miniMapHudParts.e  		= Material("/mm/hud_map_door_e.vmt")
+miniMapHudParts.w  		= Material("/mm/hud_map_door_w.vmt")
+miniMapHudParts.ply  	= Material("/mm/hud_map_player.vmt")
 
 aspectH = (ScrW() / ScrH())
 aspectV = (ScrH() / ScrW())
@@ -18,15 +47,6 @@ if aspectH > aspectV then
 else 
 	aspectV = 1
 end
-
-lastHD = CurTime()
-exitCamPos = nil
-exitEnt = nil
-
-lastPlyMapPos = Vector(0,0,0)
-
-drawBoxes = {}
-
 
 camTex = GetRenderTargetEx("exit_texture",
         ScrW(),
@@ -43,11 +63,8 @@ exitMat = CreateMaterial("exit_material", "UnlitGeneric", {
 		["$basetexture"] = "exit_texture"
 })
 
-compassBack = Material("/mm/compass_back.vmt")
-compassPointer = Material("/mm/compass_pointer.vmt")
 
-hudRTSize = 512
-hudRTName = "mini_map_hud_texture" .. tostring(CurTime())
+
 miniMapHudTexture = GetRenderTargetEx( hudRTName,
 										hudRTSize,
 										hudRTSize,
@@ -65,20 +82,116 @@ miniMapMat = CreateMaterial("mmmm_hud_material", "UnlitGeneric",
 								["$translucent"] = 1
 							})
 
-miniMapHudParts = {}
-miniMapHudParts.bg 		= Material("/mm/hud_map_basic.vmt")
-miniMapHudParts.ud  	= Material("/mm/hud_map_stairs.vmt")
-miniMapHudParts.n  		= Material("/mm/hud_map_door_n.vmt")
-miniMapHudParts.s  		= Material("/mm/hud_map_door_s.vmt")
-miniMapHudParts.e  		= Material("/mm/hud_map_door_e.vmt")
-miniMapHudParts.w  		= Material("/mm/hud_map_door_w.vmt")
-miniMapHudParts.ply  	= Material("/mm/hud_map_player.vmt")
 
-updateMiniMap = true
 
+net.Receive( "rec_room_from_server", function(len, ply)
+									
+									local roomPos = net.ReadVector()
+																		
+									local recCell = newMazeCell()
+									
+									recCell.u = net.ReadBool()
+									recCell.d = net.ReadBool()
+									recCell.n = net.ReadBool()
+									recCell.s = net.ReadBool()
+									recCell.e = net.ReadBool()
+									recCell.w = net.ReadBool()
+									recCell.visited = true
+									
+									if !GAMEMODE.curMaze then
+										GAMEMODE.curMaze = {}
+									end
+									
+									if !GAMEMODE.curMaze[roomPos.z] then
+										GAMEMODE.curMaze[roomPos.z] = {}
+									end
+									
+									if !GAMEMODE.curMaze[roomPos.z][roomPos.x]  then
+										GAMEMODE.curMaze[roomPos.z][roomPos.x] = {}
+									end
+									
+									GAMEMODE.curMaze[roomPos.z][roomPos.x][roomPos.y] = recCell
+									
+									updateMiniMap = true
+									
+								end )
+								
+net.Receive( "add_draw_box", function(len, ply)
+									
+									local newBox = {}
+									
+									newBox.pos = net.ReadVector()
+									
+									newBox.min = net.ReadVector()
+									newBox.max = net.ReadVector()
+									
+									newBox.ttl = net.ReadFloat()
+									
+									table.insert(drawBoxes, newBox)
+										
+								end )
+								
+net.Receive( "play_sound", function(len, ply)
+									
+									surface.PlaySound(net.ReadString())
+										
+								end )
+								
+net.Receive( "hud_message", function(len, ply)
+									local message = net.ReadString()
+									local ttl = net.ReadFloat()
+									
+									local msg = {}
+										  msg.message = message
+										  msg.ttl = ttl
+										  
+									table.insert(hudQueue, msg)
+										
+								end )
+								
+net.Receive( "update_maze_size", function(len, ply)
+									
+									curX = net.ReadInt(32)
+									curY = net.ReadInt(32)
+																		
+								end )
+								
+net.Receive( "world_size", function(len, ply)
+									
+									mapSize = net.ReadVector()
+									
+								end )
+								
+net.Receive( "maze_zero", function(len, ply)
+
+									mazeZero = net.ReadVector()
+									
+								end )
+								
+net.Receive( "in_maze", function(len, ply)
+
+									inMaze = net.ReadBool()
+									
+								end )
+								
+net.Receive( "get_exit_cam", function(len, ply)
+									exitCamPos = net.ReadVector()
+								end )
+								
+net.Receive( "credit_info", function(len, ply)
+									local newCredits = net.ReadInt(32)
+									
+									if credits == nil then
+										credits = makeValueSmoother(0, newCredits, 1.25) 
+									else
+										credits = makeValueSmoother(credits:GetValue(), newCredits, 1.25) 
+									end
+									
+								end )
+
+								
 function GM:RenderMapToRT(level)
 	
-	--print("RenderMapToRT( " .. tostring(level) .. " )")
 	local ply = LocalPlayer()
 	
 	local dirs = {"n", "w", "u", "d", "e", "s"}
@@ -177,7 +290,6 @@ function GM:RenderMapToRT(level)
 						
 					end
 					
-					--surface.SetMaterial()
 				end
 				
 			end
@@ -188,11 +300,7 @@ function GM:RenderMapToRT(level)
 	render.SetViewPort(0,0,ScrW(), ScrH())
 	render.OverrideAlphaWriteEnable(false)
 	miniMapMat:SetTexture("$basetexture", miniMapHudTexture)
-	
-	--miniMapMat:Recompute()
-	
-	--return actualSize --* mAspect
-	
+		
 end
 
 function GM:Initialize()
@@ -228,15 +336,13 @@ function GM:HUDPaint()
 	if #hudQueue > 0 then
 		
 		if !hudQueue[1].ttd then
-			hudQueue[1].ttd = CurTime() + hudQueue[1].ttl 
-			--PrintTable(hudQueue[1])
-			--print("CurTime(): " .. tostring(CurTime()))
-			--print("setting ttd: " .. tostring(hudQueue[1].ttd))
+			hudQueue[1].ttd = CurTime() + hudQueue[1].ttl -- (hudQueue[1].ttl / #hudQueue)
 		end
 		
 		draw.DrawText( hudQueue[1].message, "DermaLarge", ScrW() * 0.5, ScrH() * 0.2, Color( 255, 255, 255, 255 ), TEXT_ALIGN_CENTER )
 		
-		if CurTime() > hudQueue[1].ttd then
+		if CurTime() > hudQueue[1].ttd ||
+		   #hudQueue > 1 then
 			
 			table.remove(hudQueue, 1)
 		
@@ -263,7 +369,6 @@ function CleanUpMaze()
 					   GAMEMODE.roundEnt:GetCurrentTitle() != "ending") then
 		
 			local csEnts = ents.FindByClass("class C_BaseFlex")
-			--print("Found " .. tostring(#csEnts) .. " ... Removing")
 			
 			for k,csEnt in pairs(csEnts) do
 				
@@ -286,146 +391,7 @@ function CleanUpMaze()
 	timer.Simple(3, CleanUpMaze)
 	
 end
-
-
-
-net.Receive( "rec_room_from_server", function(len, ply)
-									
-									local roomPos = net.ReadVector()
-									
-									--print("Receiving info for room: " .. tostring(roomPos))
-									
-									local recCell = newMazeCell()
-									
-									recCell.u = net.ReadBool()
-									recCell.d = net.ReadBool()
-									recCell.n = net.ReadBool()
-									recCell.s = net.ReadBool()
-									recCell.e = net.ReadBool()
-									recCell.w = net.ReadBool()
-									recCell.visited = true
-									
-									--PrintTable(GAMEMODE.curMaze)
-									if !GAMEMODE.curMaze then
-										GAMEMODE.curMaze = {}
-									end
-									
-									if !GAMEMODE.curMaze[roomPos.z] then
-										GAMEMODE.curMaze[roomPos.z] = {}
-									end
-									
-									if !GAMEMODE.curMaze[roomPos.z][roomPos.x]  then
-										GAMEMODE.curMaze[roomPos.z][roomPos.x] = {}
-									end
-									
-									GAMEMODE.curMaze[roomPos.z][roomPos.x][roomPos.y] = recCell
-									
-									updateMiniMap = true
-									
-								end )
 								
-net.Receive( "add_draw_box", function(len, ply)
-									
-									local newBox = {}
-									
-									newBox.pos = net.ReadVector()
-									
-									newBox.min = net.ReadVector()
-									newBox.max = net.ReadVector()
-									
-									newBox.ttl = net.ReadFloat()
-									
-									table.insert(drawBoxes, newBox)
-										
-								end )
-								
-net.Receive( "destroy_maze", function(len, ply)
-									
-									--CleanUpMaze()
-										
-								end )
-
-net.Receive( "play_sound", function(len, ply)
-									
-									surface.PlaySound(net.ReadString())
-										
-								end )
-								
-net.Receive( "hud_message", function(len, ply)
-									--print("recieved hud message")
-									
-									local message = net.ReadString()
-									local ttl = net.ReadFloat()
-									
-									--print("message: " .. tostring(message))
-									--print("ttl: " .. tostring(ttl))
-									
-									local msg = {}
-										  msg.message = message
-										  msg.ttl = ttl
-										  
-									table.insert(hudQueue, msg)
-										
-								end )
-								
-net.Receive( "update_maze_size", function(len, ply)
-									
-									curX = net.ReadInt(32)
-									curY = net.ReadInt(32)
-									
-									--print("Got maze size update: " .. tostring(curX) .. ", " .. tostring(curY))
-									
-								end )
-								
-net.Receive( "world_size", function(len, ply)
-									
-									mapSize = net.ReadVector()
-									--print("Got map size: " .. tostring(mapSize))
-								end )
-								
-net.Receive( "maze_zero", function(len, ply)
-									--print("Got maze zero.")
-									mazeZero = net.ReadVector()
-									
-								end )
-								
-net.Receive( "in_maze", function(len, ply)
-									--print("inMaze update")
-									inMaze = net.ReadBool()
-									if !inMaze then
-										--print("Player is not in the maze...")
-									else 
-										--print("Player is in the maze...")
-									end
-								end )
-								
-net.Receive( "get_exit_cam", function(len, ply)
-									--print("Got Exit Cam Position")
-									exitCamPos = net.ReadVector()
-									--print("exitCamPos: " .. tostring(exitCamPos))
-								end )
-								
-net.Receive( "credit_info", function(len, ply)
-									--print("Got credit update")
-									local newCredits = net.ReadInt(32)
-									--print("newCredits: " .. tostring(newCredits))
-									
-									
-									if credits == nil then
-										credits = makeValueSmoother(0, newCredits, 1.25) 
-									else
-										credits = makeValueSmoother(credits:GetValue(), newCredits, 1.25) 
-										--credits.sVal = credits:GetValue()
-										--credits.eVal = newCredits
-										--credits.startTime = CurTime()
-									end
-									--print("credits: " .. tostring(credits:GetValue()))
-								end )
-								
-							
-local canNextSound = CurTime()
-local lastNum = -1
-
 function GM:Think()
 	
 	BaseClass.Think(self)
@@ -445,22 +411,15 @@ function GM:Think()
 			
 			lastNum = curNum
 			
-			--if curNum == 10 then surface.PlaySound(net.ReadString())
 		end
 	
 	end
-	----print(" ")
-	----print("compassAngle: " .. tostring(compassAngle:GetValue()))
-	----print("playerYaw: " .. tostring(playerYaw))
-	----print("angleDelta: " .. tostring(angleDelta))
 	
 	if angleDelta < -359 then
-		----print("bigDelta: " .. tostring(angleDelta) .. " <-------------------------------------------")
 		compassAngle.sVal = playerYaw
 		compassAngle.eVal = -compassAngle:GetValue()
 		
 	elseif angleDelta > 359 then
-		----print("bigDelta: " .. tostring(angleDelta) .. " <-------------------------------------------")
 		compassAngle.sVal = playerYaw
 		compassAngle.eVal = -compassAngle:GetValue()
 	else
@@ -470,8 +429,7 @@ function GM:Think()
 	
 	compassAngle.aTime = (1 / math.abs(compassAngle.sVal - compassAngle.eVal)) * 2
 	
-	compassAngle.startTime = CurTime() --makeValueSmoother(compassAngle:GetValue(), LocalPlayer():GetAngles().y, 0.1)
-	----PrintTable(compassAngle)
+	compassAngle.startTime = CurTime() 
 	if !credits then
 		net.Start("request_credit_info")
 		net.SendToServer()
@@ -512,9 +470,7 @@ end
 
 hook.Add( "RenderScene", "renderScene_m", function( ViewOrigin, ViewAngles, ViewFOV )
 	
-	
 	renderScene( ViewOrigin, ViewAngles )
-	
 	
 	if updateMiniMap then
 		local plyMapPos = GetPlayerMapPos(LocalPlayer())
@@ -526,7 +482,7 @@ hook.Add( "RenderScene", "renderScene_m", function( ViewOrigin, ViewAngles, View
 		
 		GAMEMODE.miniMapSize = GAMEMODE:RenderMapToRT(levelChar)
 		updateMiniMap = false
-		--print("miniMapSize: " .. tostring(GAMEMODE.miniMapSize))
+		
 	end 
 
 
@@ -569,10 +525,10 @@ function renderScene(origin, angles)
 	local dot = up:DotProduct( doorNormal)
 	up = up + (-2 * dot) * doorNormal
 
-	angles = math.VectorAngles( fwd, up)
+	angles = up:Cross( fwd ):Angle() + Angle(0,-90,0)
 
 	local lOrigin = exitEnt:WorldToLocal(origin)
-	local lAngles = exitEnt:WorldToLocalAngles( angles)
+	local lAngles = exitEnt:WorldToLocalAngles( angles )
 
 	lOrigin.y = -lOrigin.y
 	lAngles.y = -lAngles.y
@@ -586,23 +542,14 @@ function renderScene(origin, angles)
 	view.h = ScrH()
 
 	view.origin = exitCamPos + Vector(0,0,0)
-	--view.angles = Angle(0,180,0)
-	--view.origin = everythingServesTheBeam:LocalToWorld(lOrigin) --exitCam:GetPos() --+ ((exitCam - LocalPlayer():GetPos()) * 0.01)
-	view.angles = everythingServesTheBeam:LocalToWorldAngles(lAngles) --Angle(0,-180,0) + Angle(LocalPlayer():GetAngles().p , 0, 0)
-
+	view.angles = everythingServesTheBeam:LocalToWorldAngles(lAngles) 
+	
 	view.fov = 106
 
 	local render_target = render.GetRenderTarget()
 
 	render.SetRenderTarget(camTex)
 
-			--render.Clear(0, 0, 0, 255)
-			--render.ClearDepth()
-			--render.ClearStencil()
-			
-			--render.SetViewPort(0, 0,  80, 80)
-			--render.SetViewPort(0,0,ScrW(), ScrH())
-			
 				exitEnt:SetNoDraw(true)
 				cam.Start2D()
 					
@@ -610,37 +557,14 @@ function renderScene(origin, angles)
 					
 				cam.End2D()
 				exitEnt:SetNoDraw(false)
-			
-			--render.SetViewPort(0,0,ScrW(), ScrH())
-			
-			
+						
 	render.SetRenderTarget(render_target)
 
-	
 	exitMat:SetTexture("$basetexture", camTex)
 	
 	in_render = false
 	
 end
---[[
-function GM:PreDrawViewModel( viewModel, ply, weapon )
-	
-	viewModel = LocalPlayer():GetViewModel()
-	ply = LocalPlayer()
-	weapon = ply:GetActiveWeapon()
-	----print(self, viewModel, ply, weapon)
-	BaseClass.PreDrawViewModel(self, viewModel, ply, weapon)
-	----print(self, viewModel, ply, weapon)
-	render.SuppressEngineLighting(true)	
-	render.ResetModelLighting( 1.0, 1.0, 1.0 )
-	render.SetAmbientLight( 1.0, 1.0, 1.0 )
-	
-	
-	----print("PreDrawViewModel")
-	--viewModel:SetNoDraw(false)
-	
-end
---]]
 
 local matColor = Material("color")
 
@@ -656,15 +580,12 @@ function GM:PreDrawOpaqueRenderables()
 				
 				if curBox == nil then continue end
 				
-				----PrintTable(curBox)
-				
 				if curBox.dieTime == nil then
 					curBox.dieTime = CurTime() + curBox.ttl 
 				end
 				
 				render.SetColorMaterial()
 				
-				--render.DrawBox( curBox.pos, Angle(0,0,0), curBox.min, curBox.max, Color(255,255,0,196), true )
 				render.DrawWireframeBox( curBox.pos, Angle(0,0,0), curBox.min, curBox.max, Color(255,255,0,196), false )
 			
 				
@@ -734,16 +655,12 @@ end
 function GM:GetPlayerBlock()
 	
 	local ply = LocalPlayer()
-	----print(ply)
 	
 	local plyMapPos = GetPlayerMapPos(ply)
-	----print(plyMapPos)
 	
 	local blockPos = GetBlockWorldPos(plyMapPos) * Vector(1,1,1)
-	----print(blockPos)
 	
-	local blockList = ents.FindInBox( blockPos - (blockSizes * 0.5), blockPos + (blockSizes * 0.5) ) --ents.FindInSphere(blockPos, 128)
-	
+	local blockList = ents.FindInBox( blockPos - (blockSizes * 0.5), blockPos + (blockSizes * 0.5) ) 
 	local blockEnt = nil
 	local cDist = 640000
 	
@@ -757,73 +674,26 @@ function GM:GetPlayerBlock()
 				blockEnt = ent
 				cDist = bDist
 			end
-			--break
+			
 		end
 		
 	end
-	
-	----print("Player Block List: ")
-	----PrintTable(blockList)
-	----print("---------------------------")
-	----print("blockEnt: " .. tostring(blockEnt))
-	
+		
 	return blockEnt
 	
-end
-
-/*------------------------------------
-        VectorAngles()
-------------------------------------*/
-function math.VectorAngles( forward, up )
-
-        local angles = Angle( 0, 0, 0 )
-
-        local left = up:Cross( forward )
-        left:Normalize()
-       
-        local xydist = math.sqrt( forward.x * forward.x + forward.y * forward.y )
-       
-        // enough here to get angles?
-        if( xydist > 0.001 ) then
-       
-                angles.y = math.deg( math.atan2( forward.y, forward.x ) )
-                angles.p = math.deg( math.atan2( -forward.z, xydist ) )
-                angles.r = math.deg( math.atan2( left.z, ( left.y * forward.x ) - ( left.x * forward.y ) ) )
-
-        else
-       
-                angles.y = math.deg( math.atan2( -left.x, left.y ) )
-                angles.p = math.deg( math.atan2( -forward.z, xydist ) )
-                angles.r = 0
-       
-        end
- 
-
-        return angles
-       
 end
 
 function GM:InitPostEntity() 
 	
 	BaseClass.InitPostEntity(self)
 	
-	--print ("InitPostEntity() : " .. tostring(CurTime()))
-	
 	everythingServesTheBeam = ents.FindByClass( "beam" )[1]
-
-	--print("everythingServesTheBeam: " .. tostring(everythingServesTheBeam:GetPos()))
 
 end
 
-local storeMenu
-storeIsOpen = false
-
 function openStore(len, ply)
 	
-	--print("opening store menu...")
-	
 	if storeIsOpen then
-		--print("store already open")
 		storeMenu:Remove()
 		return
 	end
@@ -918,9 +788,6 @@ function openStore(len, ply)
 		lblTemp:SizeToContents()	
 		lblTemp:SetPos(colPad , spiBack:GetTall() - (lblTemp:GetTall() * 1.5 ) - rowPad)
 		
-		
-		--spawnIcon.OnMouseReleased = function() RememberCursorPosition( ) storeMenu:Close() end
-		
 		colCount = colCount + 1
 		if colCount == maxCols then
 			colCount = 0
@@ -938,27 +805,19 @@ function openStore(len, ply)
 	storeMenu:SetVerticalScrollbarEnabled(true)
 	
 end
-
 net.Receive("open_store", openStore)
 
 function openHelp(len, ply)
 	
-	--print("opening help menu...")
-
-
 end
-
 net.Receive("open_help", openHelp)
 
-local playerMenu
-playerIsOpen = false 
+
+
 
 function openPlayer(len, ply)
 	
-	--print("opening player menu...")
-	
 	if playerIsOpen then
-		--print("store already open")
 		playerMenu:Remove()
 		return
 	end
@@ -982,8 +841,6 @@ function openPlayer(len, ply)
 	playerMenu:SetTitle("Murder Maze - Player Options/Info")
 	playerMenu:SetDeleteOnClose(true)
 	local pmPos = {}
-	--pmPos.x, pmPos.y = playerMenu:GetPos()
-	--playerMenu:SetPos((ScrW() - playerMenu:GetWide()) - colPad * 2, pmPos.y)
 
 	playerMenu.OnRemove = function(self) 
 							playerIsOpen = false
@@ -1010,14 +867,12 @@ function openPlayer(len, ply)
 								net.SendToServer()
 								end
 								
-	--totalHorizontalOffset = totalHorizontalOffset --+ clrPick:GetWide()
 	
 	local lblPlyMdl = vgui.Create("DLabel")
 		  lblPlyMdl:SetPos((colPad * 2) + lblPlyClr:GetWide(), titleOffset + 2)
 		  lblPlyMdl:SetText("Player Model")
 		  lblPlyMdl:SetParent(playerMenu)
 
-	--totalHorizontalOffset = lblPlyMdl:GetPos() --totalHorizontalOffset + colPad
 	
 	local spawnIconWidth = (((playerMenu:GetWide() - totalHorizontalOffset) * 0.5) / maxCols) - rowPad
 	local spawnIconHeight = spawnIconWidth
@@ -1122,7 +977,6 @@ function openPlayer(len, ply)
 	playerMenu:SetSize(playerMenu:GetWide() + colPad, playerMenu:GetTall() + rowPad)
 	
 end
-
 net.Receive("open_player", openPlayer)
 
 function showWelcome(len, ply)
@@ -1140,7 +994,6 @@ function showWelcome(len, ply)
 		  htmlPanel:SetParent(welcomeMenu)
 		  htmlPanel:SetPos(5, 24)
 		  htmlPanel:SetSize(welcomeMenu:GetWide() - 5, welcomeMenu:GetTall() - (welcomeMenu:GetTall() * 0.1))
-		  --htmlPanel:OpenURL("https://sites.google.com/site/murdermazeintro/welcome/murder_maze_intro.html?attredirects=0&d=1")
 		  htmlPanel:OpenURL("https://sites.google.com/site/fantym420/")
 		  
 		  htmlPanel:Refresh(true)
@@ -1153,7 +1006,6 @@ function showWelcome(len, ply)
 		  playButton.DoClick = function() welcomeMenu:Close() end
 	
 end
-
 net.Receive("show_welcome", showWelcome)
 
 function GM:PrePlayerDraw( ply )
@@ -1197,7 +1049,6 @@ function GM:PostPlayerDraw( ply )
 	
 end
 
-
 function GM:CalcView(ply, origin, angles, fov, znear, zfar )
 	
 	local view = {}
@@ -1206,13 +1057,11 @@ function GM:CalcView(ply, origin, angles, fov, znear, zfar )
 	
 	if (playerIsOpen) then
 		
-		view.origin = plyHead + (ply:GetForward() * Vector(100,100,0)) -- + ( angles:Forward() * 180 ) + Vector(0,0,100) --+ (angles:Right() * 150)
-		view.angles = ((plyHead + ply:GetRight() * -50) - view.origin):Angle() --angles
+		view.origin = plyHead + (ply:GetForward() * Vector(100,100,0)) 
+		view.angles = ((plyHead + ply:GetRight() * -50) - view.origin):Angle()
 		view.fov = fov
 		view.drawviewer = true
 
-		--return view
-		
 	end
 			
 end

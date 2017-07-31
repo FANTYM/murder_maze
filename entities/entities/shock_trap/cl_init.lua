@@ -1,11 +1,5 @@
-
 include( "shared.lua" )
 
-
---[[---------------------------------------------------------
-	Name: Initialize
-	Desc: First function called. Use to set up your entity
------------------------------------------------------------]]
 function ENT:Initialize()
 	
 	self:SetRenderBounds( self:OBBMins() * 20, self:OBBMaxs() * 20 )
@@ -18,27 +12,6 @@ function ENT:Initialize()
 	self.emitterPos = self:GetAttachment(self:LookupAttachment("emitter")).Pos
 		
 	
-end
-
-
---[[---------------------------------------------------------
-	Name: OnRestore
-	Desc: Called immediately after a "load"
------------------------------------------------------------]]
-function ENT:OnRestore()
-
-end
-
-function ENT:DrawTranslucent()
-
-
-end
-
-
-function ENT:Think()
-
-	
-	self:NextThink(CurTime() + 1)
 end
 
 function ENT:Draw()

@@ -1,4 +1,3 @@
-
 ENT.Base = "base_entity"
 ENT.Type = "anim"
 
@@ -19,27 +18,16 @@ ENT.roomColors = { Vector( 255, 128, 128),
 				   Vector( 255, 255, 255)
 				 }
 
-
 function ENT:SetupDataTables()
 
-	self:NetworkVar( "String", 1, "BlockType" );
-	self:NetworkVar( "Bool", 2, "HasExit" );
-	self:NetworkVar( "Entity", 3, "ExitDoor" );
-	--self:NetworkVar( "Int", 15, "BottomDoorsState" );
+	self:NetworkVar( "String", 1, "BlockType" )
+	self:NetworkVar( "Bool", 2, "HasExit" )
+	self:NetworkVar( "Entity", 3, "ExitDoor" )	
 	
-	
-	if SERVER then
-		
-	end
-
 end
 
---[[---------------------------------------------------------
-	Name: Think
-	Desc: Entity's think function.
------------------------------------------------------------]]
 function ENT:Think()
 
-	self:NextThink(CurTime() + 900)
+	self:NextThink(CurTime() + 9000)
 	
 end

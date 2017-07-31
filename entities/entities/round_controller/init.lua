@@ -1,65 +1,32 @@
-
 AddCSLuaFile( "cl_init.lua" )
 AddCSLuaFile( "shared.lua" )
 
 include( "shared.lua" )
 
---[[---------------------------------------------------------
-	Name: Initialize
-	Desc: First function called. Use to set up your entity
------------------------------------------------------------]]
 function ENT:Initialize()
 
 	self:SetMoveType(MOVETYPE_NONE)
-	
-	self:SetRoundStart(CurTime())
-	self:SetRoundLength(30)
 	
 	self.currentRound = {}
 	
 	self.roundQueue = {}
 
-	self:createRound( "between", 30, "Intermission", 2, true, function()GAMEMODE:GenerateMazeLive() end)
-	self:createRound( "pre", 20, { "Maze Open, enter the teleport." }, 1, true, function() GAMEMODE:CloseEntrance()  end)
-	self:createRound( "in", 30,  "Welcome to the Murder Maze!!!!", -1, true, function() GAMEMODE:DestroyMaze() GAMEMODE:AwardPrizes() GAMEMODE:SaveAllPlayers() end)
+	self:createRound( "between", 30, "Intermission", 2, true, function() GAMEMODE:GenerateMazeLive() end, false)
+	self:createRound( "wait", -1, { "Generating Maze ..." }, 0.5, true, function() end, false, function() return !generatingMaze end)
+	self:createRound( "pre", 10, { "Opening maze, hurry to the portal." }, 1, true, function() GAMEMODE:CloseEntrance()  end, false)
+	self:createRound( "in", 3000,  "Welcome to the Murder Maze!!!!", -1, true, function() GAMEMODE:DestroyMaze() GAMEMODE:AwardPrizes() GAMEMODE:SaveAllPlayers() end, false)
 	
 	self:ChangeRound()
 	
 end
 
-function ENT:CreateRoundID()
-	
-	----print("CreateRoundID")
-	local rndSeed = math.random()
-	----print("rndSeed: " .. tostring(rndSeed))
-	local rndStr = tostring(math.floor(rndSeed * 100000000))
-	----print("rndStr: " .. tostring(rndStr))
-	local rndStart = math.floor(math.random() * (string.len(rndStr) * 0.25))
-	local subStr = rndStr:sub(	2 + rndStart, 
-								rndStart + 4)
-								
-	----print("subStr: " .. tostring(subStr))
-	
-	local asNum = tonumber(subStr)
-	
-	asNum = ((asNum * 3) * ((string.len(rndStr) - string.len(subStr)) * (string.len(rndStr) - string.len(subStr))) * math.pi) * 1000000000
-	
-	----print("asNum: " .. tostring(asNum))
-	
-	local asHex = bit.tohex(asNum)
-	
-	----print("asHex: " .. tostring(asHex))
-	
-	return asHex
-	
-end
-
-function ENT:createRound( roundTitle, roundLength, startText, textRepeatRate, reQueue, roundFunc, makeNext )
+function ENT:createRound( roundTitle, roundLength, startText, textRepeatRate, reQueue, roundFunc, makeNext, lengthFunction )
 
 	local newRound = {}
 	
-	newRound.rTitle = roundTitle
 	newRound.rLen = roundLength
+	newRound.lenFunc = lengthFunction
+	newRound.rTitle = roundTitle
 	newRound.sText = startText
 	newRound.rFunc = roundFunc
 	newRound.rQueue = reQueue
@@ -84,7 +51,6 @@ function ENT:SetRoundTimeByName(roundName, newTime)
 	
 	end
 	
-
 end
 
 function ENT:SetNextRoundTime(newTime)
@@ -98,14 +64,11 @@ end
 function ENT:SetCurrentRoundTime(newTime)
 	
 	self.currentRound.rLen = newTime
-	self:GetRoundLength(newTime)
+	self:SetRoundLength(newTime)
 
 end
 
 function ENT:ChangeRound(skipFuncAtEnd)
-	
-	
-	local newID = self:CreateRoundID()
 	
 	if !skipFuncAtEnd then
 		if self.currentRound.rFunc then
@@ -122,27 +85,26 @@ function ENT:ChangeRound(skipFuncAtEnd)
 			table.insert(self.roundQueue, nextRound)
 		end
 		
-		self.currentRound = nextRound
-		
-		self.currentRound.roundID = newID
-		
-		self:SetRoundID(newID)
-		
 		self:SetCurrentTitle(nextRound.rTitle)
 		
 		self:SetRoundStart(CurTime())
-		self:SetRoundLength(nextRound.rLen)
-		self:SetTimeLeft(nextRound.rLen)
 		
-		if type(nextRound.sText) == "table" then
-			--PrintMessage(HUD_PRINTCENTER, self:ProcessTextTable(nextRound.sText))
-			GAMEMODE:SendHudMessage( self:ProcessTextTable(nextRound.sText), 0.25)
-		else
-			--PrintMessage(HUD_PRINTCENTER, nextRound.sText)
-			GAMEMODE:SendHudMessage( nextRound.sText, 0.25)
+		if nextRound.lenFunc then
+			nextRound.rLen = math.ceil(math.random() * 9999)
 		end
 		
-		self.currentRound.lastText = CurTime()
+		self:SetRoundLength(nextRound.rLen)
+		self:SetTimeLeft(self:GetRoundLength())
+		
+		if type(nextRound.sText) == "table" then
+			GAMEMODE:SendHudMessage( self:ProcessTextTable(nextRound.sText), nextRound.repRate)
+		else
+			GAMEMODE:SendHudMessage( nextRound.sText, nextRound.repRate)
+		end
+		
+		nextRound.lastText = CurTime()
+		
+		self.currentRound = nextRound
 		
 	end
 	
@@ -167,28 +129,33 @@ end
 
 function ENT:Think()
 	
-	----PrintTable(self.currentRound)
 	local changeRound = false
 	
 	GAMEMODE.roundEnt = self
 	
-	self:SetTimeLeft((self:GetRoundStart() + self:GetRoundLength()) - CurTime())
-	----print(self:GetTimeLeft())
+	if self.currentRound.lenFunc then
+		if self.currentRound.lenFunc() then
+			self:SetTimeLeft(0)
+		else
+			self:SetTimeLeft(2 + math.ceil(math.random() * 9999))
+			self:SetRoundStart(CurTime() + 1)
+		end
+	else
+		self:SetTimeLeft((self:GetRoundStart() + self:GetRoundLength()) - CurTime())
+	end
+	
 	if self:GetTimeLeft() <= 0 then
 		changeRound = true
 	end
 	
-	if CurTime() < (self.currentRound.lastText + self.currentRound.repRate) then
+	if (self.currentRound.repRate >= 0) && 
+	   (CurTime() >= (self.currentRound.lastText + self.currentRound.repRate)) then
 		
-		--if (self:GetTimeLeft() % self.currentRound.repRate) == 0 then
-			if type(self.currentRound.sText) == "table" then
-				--PrintMessage(HUD_PRINTCENTER, self:ProcessTextTable(self.currentRound.sText))
-				GAMEMODE:SendHudMessage( self:ProcessTextTable(self.currentRound.sText), 0.25)
-			else
-				--PrintMessage(HUD_PRINTCENTER, self.currentRound.sText)
-				GAMEMODE:SendHudMessage( self.currentRound.sText, 0.25)
-			end
-		--end
+		if type(self.currentRound.sText) == "table" then
+			GAMEMODE:SendHudMessage( self:ProcessTextTable(self.currentRound.sText), self.currentRound.repRate)
+		else
+			GAMEMODE:SendHudMessage( self.currentRound.sText, self.currentRound.repRate)
+		end
 		
 		self.currentRound.lastText = CurTime()
 		
@@ -196,52 +163,16 @@ function ENT:Think()
 	
 	if changeRound then self:ChangeRound() end
 	
-	self:NextThink(CurTime()) -- + 0.0125)
-end
-
---[[---------------------------------------------------------
-	Name: KeyValue
-	Desc: Called when a keyvalue is added to us
------------------------------------------------------------]]
-function ENT:KeyValue( key, value )
-	self[key] = value
-end
-
---[[---------------------------------------------------------
-	Name: OnRestore
-	Desc: The game has just been reloaded. This is usually the right place
-		to call the GetNW* functions to restore the script's values.
------------------------------------------------------------]]
-function ENT:OnRestore()
-end
-
---[[---------------------------------------------------------
-	Name: AcceptInput
-	Desc: Accepts input, return true to override/accept input
------------------------------------------------------------]]
-function ENT:AcceptInput( name, activator, caller, data )
-	
-
+	self:NextThink(CurTime() + (math.random() * 0.25))
 	
 end
 
-
-function ENT:StartTouch( ent )
-
-	
-end
---[[---------------------------------------------------------
-	Name: UpdateTransmitState
-	Desc: Set the transmit state
------------------------------------------------------------]]
 function ENT:UpdateTransmitState()
 	return TRANSMIT_ALWAYS
 end
 
-
 function ENT:PhysicsSimulate( phys, deltatime )
 
-	
 	return 0, 0, SIM_NOTHING
 
 end

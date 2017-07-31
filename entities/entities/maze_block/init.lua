@@ -1,13 +1,8 @@
-
 AddCSLuaFile( "cl_init.lua" )
 AddCSLuaFile( "shared.lua" )
 
 include( "shared.lua" )
 
---[[---------------------------------------------------------
-	Name: Initialize
-	Desc: First function called. Use to set up your entity
------------------------------------------------------------]]
 function ENT:Initialize()
 	
 	self.doors = {}
@@ -16,24 +11,14 @@ function ENT:Initialize()
 	
 	self.doors.b = {}
 	
-	--self.attachments = self:GetAttachments()
-	
-	----PrintTable(self.attachments)
-	
-	
 end
 
 function ENT:SetType(newType)
 	
-	-- basic block = "b"
-	-- ud block    = "u"
-	
 	if newType == "b" then
 		self:SetModel("models/mm/maze_block.mdl")
-		----print("basic block")
 	else 
 		self:SetModel("models/mm/maze_block_ud.mdl")
-		----print("up/down block")
 	end
 	
 	self:SetBlockType(newType)
@@ -45,42 +30,9 @@ function ENT:SetType(newType)
 	
 end
 
-
-
---[[---------------------------------------------------------
-	Name: KeyValue
-	Desc: Called when a keyvalue is added to us
------------------------------------------------------------]]
-function ENT:KeyValue( key, value )
-	self[key] = value
-end
-
---[[---------------------------------------------------------
-	Name: OnRestore
-	Desc: The game has just been reloaded. This is usually the right place
-		to call the GetNW* functions to restore the script's values.
------------------------------------------------------------]]
-function ENT:OnRestore()
-end
-
---[[---------------------------------------------------------
-	Name: AcceptInput
-	Desc: Accepts input, return true to override/accept input
------------------------------------------------------------]]
-function ENT:AcceptInput( name, activator, caller, data )
-
-	
-end
-
---[[---------------------------------------------------------
-	Name: UpdateTransmitState
-	Desc: Set the transmit state
------------------------------------------------------------]]
 function ENT:UpdateTransmitState()
 	return TRANSMIT_PVS
 end
-
-
 
 function ENT:PhysicsSimulate( phys, deltatime )
 
@@ -123,18 +75,9 @@ function ENT:OpenAllDoors()
 
 end
 
-
-
 function ENT:SetDoor(doorLevel, doorDir, hasDoor)
 
-	----print("SetDoor")
-	----print("doorLevel: " .. doorLevel .. "doorDir: " .. doorDir .. "hasDoor: " .. tostring(hasDoor))
-	
-	----PrintTable(self.doors)
-	
 	local curDoor = self.doors[doorLevel][doorDir]
-	
-	----print("curDoor: " .. tostring(curDoor))
 	
 	local dirAngles = {}
 		  dirAngles.n = Angle(   0,   90,   0)

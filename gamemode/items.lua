@@ -59,12 +59,6 @@ end
 
 local function canBuyWeapon(item, itemBuyer)
 		
-		
-		--print("canBuyWeapon")
-		--print("item:")
-		--PrintTable(item)
-		--print("itemBuyer: " .. tostring(itemBuyer))
-		
 		if goodBuyer(itemBuyer) then
 			if hasCredits(item, itemBuyer) then
 		
@@ -94,12 +88,6 @@ end
 
 local function canBuyAmmo(item, itemBuyer)
 
-
-	--print("canBuyAmmo")
-	--print("item:")
-	--PrintTable(item)
-	--print("itemBuyer: " .. tostring(itemBuyer))
-	
 	if goodBuyer(itemBuyer) then
 		if hasCredits(item, itemBuyer) then
 			
@@ -125,8 +113,6 @@ end
 	  
 local function buyWeaponOrItem(itemClass, itemQuantity, itemOwner)
 	
-	----print("buyWeaponOrItem - Default")
-	
 	if IsValid(itemOwner) && itemOwner:IsPlayer() then
 		
 		local newThing = itemOwner:Give(itemClass)
@@ -136,9 +122,7 @@ local function buyWeaponOrItem(itemClass, itemQuantity, itemOwner)
 			itemOwner:SetAmmo( 0, items.weaponsAmmo[itemClass] )
 			newThing:SetClip1(0)
 			newThing:SetClip2(0)
-			
-			--itemOwner:SetPData("mm_items_" .. itemClass, itemQuantity)
-			
+	
 		end
 		
 	end
@@ -147,19 +131,14 @@ end
 
 local function buyAmmo(itemClass, itemQuantity, itemOwner)
 
-	----print("buyAmmo - Default")
-
 	if IsValid(itemOwner) && itemOwner:IsPlayer() then
 		
 		itemOwner:GiveAmmo(itemQuantity, itemClass, true)
-		--itemOwner:SetPData("mm_items_" .. itemClass, itemQuantity)
-		
+	
 	end
 end
 
 local function buyWeaponOrAmmo(itemClass, itemQuantity, itemOwner)
-	
-	----print("buyWeaponOrAmmo - Default")
 	
 	if IsValid(itemOwner) && itemOwner:IsPlayer() then
 		
@@ -174,13 +153,8 @@ local function buyWeaponOrAmmo(itemClass, itemQuantity, itemOwner)
 				elseif itemClass == "weapon_slam" then
 					itemOwner:GiveAmmo(itemQuantity - 3, items.weaponsAmmo[itemClass], true)
 				end
-				--newThing:SetClip1(0)
-				--newThing:SetClip2(0)
-				--itemOwner:SetAmmo(itemQuantity, items.weaponsAmmo[itemClass])
 			end
 		end
-		
-		--itemOwner:SetPData("mm_items_" .. itemClass, itemQuantity)
 		
 	end
 	
@@ -224,12 +198,9 @@ addItem("Trip Mine",	 	"weapon_slam", 		"models/weapons/w_slam.mdl", 				2500, 	
 
 addItem("Increase Health", 	"item_healthkit", 	"models/Items/HealthKit.mdl", 				5000, 	10, 999,	function(itemClass, itemQuantity, itemOwner)
 																													
-																													----print("buyHealth")
-																													
 																													if IsValid(itemOwner) && itemOwner:IsPlayer() then
 																														
 																														itemOwner:SetMaxHealth(math.min(itemOwner:Health() + itemQuantity, 999))
-																														--itemOwner:SetPData("mm_ply_max_health", itemOwner:Health() + itemQuantity)
 																														itemOwner:SetHealth(itemOwner:GetMaxHealth())
 																														itemOwner:SetPData("mm_ply_max_health", itemOwner:GetMaxHealth())
 																														
@@ -238,10 +209,6 @@ addItem("Increase Health", 	"item_healthkit", 	"models/Items/HealthKit.mdl", 			
 																												end, 																												
 																												function(item, itemBuyer)
 																													
-																													----print("canBuy - Health")
-																													----print("item: " )
-																													--PrintTable(item)
-																													----print("itemBuyer: " .. tostring(itemBuyer))
 																													if IsValid(itemBuyer) && itemBuyer:IsPlayer() then
 																														if itemBuyer.credits >= item.cost then
 																															if item.class == "item_healthkit" then
@@ -262,10 +229,4 @@ addItem("Increase Health", 	"item_healthkit", 	"models/Items/HealthKit.mdl", 			
 																													
 																												end)
 																													
-																											
-
-
---addItem("", "", "", 500, 1)
-
-
 return items

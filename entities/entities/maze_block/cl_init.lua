@@ -1,27 +1,16 @@
-
 include( "shared.lua" )
 
---[[---------------------------------------------------------
-	Name: Initialize
-	Desc: First function called. Use to set up your entity
------------------------------------------------------------]]
 function ENT:Initialize()
 
 	self.lightLevel = 0.9
 	
-	----PrintTable(self:GetAttachments())
 	self.lightPos = self:GetAttachment(self:LookupAttachment("room_light")).Pos
-	--self.lightColor = self.roomColors[math.ceil(math.random() * #self.roomColors)] --Vector( math.floor(math.random() * 256),
-							  --math.floor(math.random() * 256),
-						      --math.floor(math.random() * 256) )
-	--*self.lightColor = self:GetColor()
 	self.lightFlux = 0.4
 	self.osc = -180
 	
 	self:makeCSModel()
 	
 	timer.Simple(1, function() if IsValid(self) then self:doFlux() end end)
-	
 	
 end
 
@@ -32,7 +21,6 @@ function ENT:makeCSModel()
 	self.csModel.owner = self
 	self.csModel:SetNoDraw(true)
 
-	
 end
 
 function ENT:KillCSModelOnRemove(csModel)
@@ -79,24 +67,12 @@ function ENT:doFlux()
 	
 end
 
---[[---------------------------------------------------------
-	Name: OnRestore
-	Desc: Called immediately after a "load"
------------------------------------------------------------]]
-function ENT:OnRestore()
-
-end
-
-
-
-function ENT:Draw() --Translucent()
+function ENT:Draw()
 	
 	local entDist = (LocalPlayer():GetPos() - self:GetPos()):Length()
 	
 	if ( entDist > 1584) then return end
-	
-	----print(tostring(self) .. " dist to player: " .. tostring(entDist) .. " - Drawing...")
-	
+
 	self.lightLevel = 1 + self.lightFlux
 	
 	render.SuppressEngineLighting(true)
@@ -128,7 +104,6 @@ end
 
 function ENT:colorToVector(clr)
 
-	
 	return Vector(clr.r, clr.g, clr.b)
 
 end

@@ -1,11 +1,5 @@
-
 include( "shared.lua" )
 
-
---[[---------------------------------------------------------
-	Name: Initialize
-	Desc: First function called. Use to set up your entity
------------------------------------------------------------]]
 function ENT:Initialize()
 	
 	self:SetRenderBounds( self:OBBMins() * 20, self:OBBMaxs() * 20 )
@@ -15,27 +9,6 @@ function ENT:Initialize()
 	language.Add("laser_trap", "Laser Trap")
 	killicon.Add( "laser_trap", "mm/laser_trap_killicon", Color(255,0,0,196) )
 	
-end
-
-
---[[---------------------------------------------------------
-	Name: OnRestore
-	Desc: Called immediately after a "load"
------------------------------------------------------------]]
-function ENT:OnRestore()
-
-end
-
-function ENT:DrawTranslucent()
-
-
-end
-
-
-function ENT:Think()
-
-	
-	self:NextThink(CurTime() + 1)
 end
 
 function ENT:Draw()
