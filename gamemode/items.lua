@@ -181,22 +181,22 @@ local function addItem(itemTitle, itemClass, itemModel, itemCost, itemQuantity, 
 end
  
 
-addItem("Pistol",			"weapon_pistol", 	"models/weapons/w_pistol.mdl", 				250, 	1, 	1, buyWeaponOrItem, canBuyWeapon)
-addItem(".357 Magnum", 		"weapon_357", 		"models/weapons/w_357.mdl",  				500, 	1, 	1, buyWeaponOrItem, canBuyWeapon)
+addItem("Pistol",			"weapon_pistol", 	"models/weapons/w_pistol.mdl", 				500, 	1, 	1, buyWeaponOrItem, canBuyWeapon)
+addItem(".357 Magnum", 		"weapon_357", 		"models/weapons/w_357.mdl",  				750, 	1, 	1, buyWeaponOrItem, canBuyWeapon)
 addItem("Shotgun", 			"weapon_shotgun", 	"models/weapons/w_shotgun.mdl", 			1500, 	1, 	1, buyWeaponOrItem, canBuyWeapon)
 addItem("SMG", 				"weapon_smg1", 		"models/weapons/w_smg1.mdl",				2000, 	1, 	1, buyWeaponOrItem, canBuyWeapon)
 
-addItem("Pistol Ammo", 		"Pistol", 			"models/items/ammocrate_pistol.mdl", 		25, 	18, 180,	buyAmmo, canBuyAmmo)
+addItem("Pistol Ammo", 		"Pistol", 			"models/items/ammocrate_pistol.mdl", 		50, 	18, 180,	buyAmmo, canBuyAmmo)
 addItem(".357 Ammo", 		"357", 				"models/items/357ammo.mdl", 				100, 	6, 	60,		buyAmmo, canBuyAmmo)
-addItem("Shotgun Ammo", 	"Buckshot", 		"models/items/ammocrate_buckshot.mdl", 		250, 	6, 	60,		buyAmmo, canBuyAmmo)
-addItem("SMG Ammo", 		"SMG1", 			"models/items/ammocrate_smg1.mdl", 			500, 	45, 450,	buyAmmo, canBuyAmmo)
-addItem("SMG Grenade Ammo", "SMG1_Grenade", 	"models/Items/AR2_Grenade.mdl",				1000, 	1, 	10,		buyAmmo, canBuyAmmo)
+addItem("Shotgun Ammo", 	"Buckshot", 		"models/items/ammocrate_buckshot.mdl", 		200, 	6, 	60,		buyAmmo, canBuyAmmo)
+addItem("SMG Ammo", 		"SMG1", 			"models/items/ammocrate_smg1.mdl", 			400, 	45, 450,	buyAmmo, canBuyAmmo)
+addItem("SMG Grenade Ammo", "SMG1_Grenade", 	"models/Items/AR2_Grenade.mdl",				800, 	1, 	10,		buyAmmo, canBuyAmmo)
 
-addItem("Frag Grenade", 	"weapon_frag", 		"models/items/grenadeammo.mdl", 			1000, 	6, 	60,		buyWeaponOrAmmo, canBuyWeapon)
+addItem("Frag Grenade", 	"weapon_frag", 		"models/items/grenadeammo.mdl", 			600, 	6, 	60,		buyWeaponOrAmmo, canBuyWeapon)
 
-addItem("Trip Mine",	 	"weapon_slam", 		"models/weapons/w_slam.mdl", 				2500, 	3, 	30,		buyWeaponOrAmmo, canBuyWeapon)
+addItem("Trip Mine",	 	"weapon_slam", 		"models/weapons/w_slam.mdl", 				2000, 	3, 	30,		buyWeaponOrAmmo, canBuyWeapon)
 
-addItem("Increase Health", 	"item_healthkit", 	"models/Items/HealthKit.mdl", 				5000, 	10, 999,	function(itemClass, itemQuantity, itemOwner)
+addItem("Increase Health", 	"item_healthkit", 	"models/Items/HealthKit.mdl", 				2500, 	10, 999,	function(itemClass, itemQuantity, itemOwner)
 																													
 																													if IsValid(itemOwner) && itemOwner:IsPlayer() then
 																														
