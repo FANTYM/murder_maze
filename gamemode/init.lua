@@ -30,16 +30,12 @@ resource.AddFile( "materials/mm/tvscreen005a.vmt" )
 
 resource.AddFile( "materials/mm/laser_trap_killicon.vmt")
 resource.AddFile( "materials/mm/shock_trap_killicon.vmt")
-resource.AddFile( "materials/mm/spike_trap_killicon.vmt")
 
 resource.AddFile( "models/mm/laser_trap.mdl" )
 resource.AddFile( "models/mm/maze_block.mdl" )
 resource.AddFile( "models/mm/maze_block_ud.mdl" )
 resource.AddFile( "models/mm/maze_door.mdl" )
-resource.AddFile( "models/mm/back_spike_pad.mdl" )
-resource.AddFile( "models/mm/front_spike_pad.mdl" )
 resource.AddFile( "models/mm/shock_trap.mdl" )
-resource.AddFile( "models/mm/spike_trap.mdl" )
 resource.AddFile( "models/mm/snare_trap.mdl" )
 
 include( "shared.lua" )
@@ -1279,8 +1275,8 @@ function GM:GenerateMazeLive(mazeData, runNum)
 	
 	runNum = runNum + 1
 	
-	print( "-= @#@#@#@#@#@#@#@#@#@#@#@# Generating Maze Live #@#@#@#@#@#@#@#@#@#@#@#@#@#@ =-")
-	print("runNum: " .. tostring(runNum))
+	--print( "-= @#@#@#@#@#@#@#@#@#@#@#@# Generating Maze Live #@#@#@#@#@#@#@#@#@#@#@#@#@#@ =-")
+	--print("runNum: " .. tostring(runNum))
 	local dirs = {"u", "d", "n", "s", "e", "w"}
 	
 	local wordVommit = false 
