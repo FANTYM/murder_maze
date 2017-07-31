@@ -9,6 +9,6 @@ ENT.RenderGroup = RENDERGROUP_TRANSLUCENT
 
 
 function ENT:SetupDataTables()
-
+	
 end
 

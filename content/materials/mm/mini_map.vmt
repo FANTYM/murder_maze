@@ -1,5 +1,4 @@
-"VertexLitGeneric"
+"vertexlitgeneric"
 {
 	"$basetexture"	"mm/mini_map"
-	"$model"		"1"
 }

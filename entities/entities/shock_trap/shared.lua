@@ -11,6 +11,7 @@ function ENT:SetupDataTables()
 
 	self:NetworkVar( "Vector", 0, "ShockSpot" )
 	self:NetworkVar( "Bool", 1, "IsShocking")
+	self:NetworkVar( "Entity", 2, "Block" )
 	
 	if SERVER then
 		self:SetShockSpot(Vector(0,0,0))

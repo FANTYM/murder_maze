@@ -40,10 +40,11 @@ resource.AddFile( "models/mm/back_spike_pad.mdl" )
 resource.AddFile( "models/mm/front_spike_pad.mdl" )
 resource.AddFile( "models/mm/shock_trap.mdl" )
 resource.AddFile( "models/mm/spike_trap.mdl" )
+resource.AddFile( "models/mm/snare_trap.mdl" )
 
 include( "shared.lua" )
 
-traps = { "laser_trap", "shock_trap" } --, "spike_trap" }
+traps = { "laser_trap", "shock_trap" , "snare_trap" }
 	
 blocks = {}
 
@@ -1510,6 +1511,9 @@ function GM:CreateMaze(mazeData)
 						newTrap:Spawn()
 						
 						newTrap:Deploy(newTrapPos)
+						
+						newTrap:SetBlock(curBlock)
+						
 					end
 					
 					

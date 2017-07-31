@@ -57,14 +57,14 @@ function ENT:Think()
 		
 	if GAMEMODE.roundEnt:GetCurrentTitle() != "in" then return end
 	
-	local snareables = ents.FindInSphere(self:GetPos(), 64)
-	
+	local snareables = ents.FindInSphere(self:GetPos(), 196)
+	--PrintTable(snareables)
 	for k, ent in pairs(snareables) do
 		
 		if IsValid(ent) && ent:IsPlayer() then
 			
 			local traceData = {}
-				  traceData.start = self:GetPos() + self.emitterPos
+				  traceData.start = self:GetPos()
 				  traceData.endpos = ent:LocalToWorld(ent:OBBCenter())
 				  
 				  traceData.filter = {self}
@@ -83,12 +83,17 @@ function ENT:Think()
 						end
 					end
 					
-					if plyIndex >= 0 then
+					if plyIndex < 0 then
+						
+						ent:SetVelocity((self:GetPos() - traceData.endpos) * 3)
 						
 						ent.snared = true
 						
-						timer.Simple(0.2, function() if IsValid(ent) then ent.snared = false end end)
-						timer.Simple(0.25, function() self.snareList[plyIndex] = nil end)
+						timer.Simple(1, function() if IsValid(ent) then 
+														ent.snared = false
+													end 
+										end)
+						timer.Simple(2, function() self.snareList[plyIndex] = nil end)
 					
 					end
 				
@@ -100,5 +105,5 @@ function ENT:Think()
 	
 	end
 	
-	self:NextThink(CurTime() + 0.75)
+	self:NextThink(CurTime() + 0.25)
 end

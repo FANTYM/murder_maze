@@ -13,17 +13,23 @@ end
 
 function ENT:Draw()
 	
-	--[[
+	if !self.parentBlock then
+		
+		self.parentBlock = self:GetBlock()
+		
+		if !self.parentBlock then return end
+	end
+	
 	render.SuppressEngineLighting(true)
 	
-	render.SetLightingOrigin(doorBlock.lightPos)
+	render.SetLightingOrigin(self.parentBlock.lightPos)
 	
 	render.ResetModelLighting( 0.0, 0.0, 0.0 )
 	
 	lightInfo = {}
 	lightInfo.type = MATERIAL_LIGHT_POINT
-	lightInfo.color = doorBlock.lightColor * 0.25
-	lightInfo.pos = doorBlock.lightPos
+	lightInfo.color = self.parentBlock:colorToVector(self.parentBlock:GetColor())
+	lightInfo.pos = self.parentBlock.lightPos
 
 	lightInfo.fiftyPercentDistance = 13.5
 	lightInfo.zeroPercentDistance = 27
@@ -32,7 +38,7 @@ function ENT:Draw()
 	lightInfo.constantFalloff = 0
 	
 	render.SetLocalModelLights({lightInfo})
-	--]]
+	
 	
 	self:DrawModel()
 		
@@ -48,16 +54,8 @@ function ENT:Draw()
 	render.SetMaterial(self.laserMat)
 	render.DrawBeam(self:GetPos(), 
 					traceRes.HitPos , 8, 0, 1, Color(255,0,0,128))		
-	--[[
 	
-	self:GetPos() + Vector( math.sin(math.rad(self:GetShootAngle())) * blockSizes.x, 
-										    math.cos(math.rad(self:GetShootAngle())) * blockSizes.y,
-										    0 )
-											
-	--]]
-
-	
-	--render.SuppressEngineLighting(false)
+	render.SuppressEngineLighting(false)
 
 	
 end

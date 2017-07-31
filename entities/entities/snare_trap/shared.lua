@@ -9,6 +9,8 @@ ENT.RenderGroup = RENDERGROUP_BOTH
 
 function ENT:SetupDataTables()
 
+	self:NetworkVar( "Entity", 0, "Block" )
+	self:NetworkVar( "Entity", 1, "Snared")
 	
 end
 
