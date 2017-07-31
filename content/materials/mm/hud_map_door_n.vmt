@@ -1,0 +1,5 @@
+"UnlitGeneric"
+{
+	"$basetexture" "mm/hud_map_door_n"
+	"$translucent" 1
+}

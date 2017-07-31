@@ -1,0 +1,19 @@
+"gravity_racer"
+{
+	"base"		"base"
+	"title"		"Murder Maze"
+	"maps"		"^murder_maze"
+	"menusystem"	"1"
+
+	"settings"
+	{
+		1
+		{
+			"name"		"test_setting"
+			"text"		"test_it"
+			"help"		"Placeholder if I need this"
+			"type"		"CheckBox"
+			"default"	"0"
+		}
+	}
+}

@@ -1,0 +1,105 @@
+"unlittwotexture"
+{
+	"$basetexture" "effects/combineshield/comshieldwall"
+	"$texture2" "effects/combineshield/comshieldwall_close"
+//	"$texture2" "effects/combineshield/comshieldwall"
+
+	"$translucent" "1"
+	"$envmap" "env_cubemap"
+	"$envmaptint" "[1 1 1]"
+	"$gnoise" "1"
+	"$playerdistance" "0"
+	"$additive" 1
+	"$alpharesult" "1"
+	"$smallamount" ".1"
+	"$alpharesultmin" "1"
+	"$alpharesultmax" "1"
+	"$nodecal" 1
+	"$hundred" "100"
+	"$largeamount" "1"
+	"$playerdistance2" "1"
+	"$ten" "22"
+	"$frameminusten" "1"
+
+	"proxies"
+	{
+
+		"playerproximity"
+		{
+			"resultvar" "$playerdistance2"
+			"scale"  .1
+		}	
+		"subtract"
+		{
+			"srcvar1" "$playerdistance2"
+			"srcvar2" "$ten"
+			"resultvar" "$frameminusten"
+		}
+		"clamp"
+		{
+			"srcvar1"	"$frameminusten"
+			"min"		"0"
+			"max"		"30"
+			"resultvar" "$frame2"
+		}
+		"clamp"
+		{
+			"srcvar1"	"$frameminusten"
+			"min"		"0"
+			"max"		"30"
+			"resultvar" "$frame"
+		}
+
+		"playerproximity"
+		{
+			"resultvar" "$playerdistance"
+			"scale" 0.001 
+		}	
+		"gaussiannoise"
+		{
+			"minval" .8
+			"maxval" 1	
+ 			"mean" .7
+			"halfwidth" .3
+			"resultvar" "$gnoise"
+		}
+		"subtract"
+		{
+			"srcvar1" "$gnoise"
+			"srcvar2" "$playerdistance"
+			"resultvar" "$alpharesultmin"
+		}
+		"multiply"
+		{
+			"srcvar1" "$hundred"
+			"srcvar2" "$playerdistance"
+			"resultvar" "$largeamount"
+		}
+		"equals"
+		{
+			"srcvar1" "$playerdistance"
+			"resultvar" "$envmaptint[1]"
+		}	
+		"add"
+		{
+			"srcvar1" "$alpharesultmin"
+			"srcvar2" "$smallamount"
+			"resultvar" "$alpharesultmax"
+		}	
+		"sine"
+		{
+			"sineperiod"	1.08
+			"sinemin"	"$alpharesultmin"
+			"sinemax"	"$alpharesultmax"
+			"resultvar"	"$alpha"
+		}
+
+
+		"texturescroll"
+		{
+			"texturescrollvar" "$texture2transform"
+			"texturescrollrate" .1
+			"texturescrollangle" 20
+		}
+	}
+}

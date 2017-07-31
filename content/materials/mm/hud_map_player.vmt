@@ -1,0 +1,6 @@
+"UnlitGeneric"
+{
+	"$basetexture" "mm/hud_map_player"
+	"$translucent" 1
+	"$vertexcolor" 1
+}

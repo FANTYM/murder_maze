@@ -1,0 +1,24 @@
+"lightmappedtwotexture"
+{
+	// original shader: worldadditivetransenvmapwithmaskedtexture
+
+	// base texture is a dummy; we need something here to indicate to the shader
+	// that we've got one though
+	"$basetexture" "glass/glasswindow018a_cracked"
+
+	"$detail" "glass/glasswindow018a_cracked"
+	"$envmap" "env_cubemap"
+
+	"$surfaceprop" "glass"
+	"%keywords" "c17industrial"
+	"$envmapmask" "glass/glasswindow018a_mask"
+	"$translucent" 1
+	"$envmaptint" "[.4 .4 .35]"
+	"$nocull" 1
+	"proxies"
+	{
+		"windowglass"
+		{
+		}
+	}
+}
