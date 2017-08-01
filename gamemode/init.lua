@@ -1098,7 +1098,8 @@ end
 
 -- F1
 function GM:ShowHelp( ply )
-	
+	net.Start("show_welcome")
+	net.Send(ply)
 end
 
 -- F2 
@@ -1127,8 +1128,7 @@ end
 -- F4
 function GM:ShowSpare2(  ply )
 	
-	net.Start("show_welcome")
-	net.Send(ply)
+	
 	
 end
 
