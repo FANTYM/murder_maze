@@ -40,32 +40,34 @@ resource.AddFile( "models/mm/snare_trap.mdl" )
 
 include( "shared.lua" )
 
-traps = { "laser_trap", "shock_trap" , "snare_trap" }
+mm_sv_globals = {}
+
+mm_sv_globals.traps = { "laser_trap", "shock_trap" , "snare_trap" }
 	
-blocks = {}
+mm_sv_globals.blocks = {}
 
-roundEntity = ""
+mm_sv_globals.roundEntity = ""
 
-prizePool = 0
+mm_sv_globals.prizePool = 0
 
-playersOnServer = 0
+mm_sv_globals.playersOnServer = 0
 
-playersInRound = {}
+mm_sv_globals.playersInRound = {}
 
-finishedPlayers = {}
+mm_sv_globals.finishedPlayers = {}
 
-miniMapPos = Vector(0,0,0)
+mm_sv_globals.miniMapPos = Vector(0,0,0)
 
-hasMaze = false
+mm_sv_globals.hasMaze = false
 
-miniEnt = ""
+mm_sv_globals.miniEnt = ""
 
-generatingMaze = false
+mm_sv_globals.generatingMaze = false
 
 for x = 0, 29 do
-	blocks[x] = {}
+	mm_sv_globals.blocks[x] = {}
 	for y = 0, 29 do
-		blocks[x][y] = nil
+		mm_sv_globals.blocks[x][y] = nil
 	end
 end
 
@@ -313,23 +315,23 @@ end)
 function GM:AwardPrizes()
 	
 	local curPrize = 0
-	local dnfPrize = prizePool * 0.05
-	local totalPlayers = (#finishedPlayers + #playersInRound)
+	local dnfPrize = mm_sv_globals.prizePool * 0.05
+	local totalPlayers = (#mm_sv_globals.finishedPlayers + #mm_sv_globals.playersInRound)
 	
-	for i = 1, #finishedPlayers do
+	for i = 1, #mm_sv_globals.finishedPlayers do
 		
-		local ply = finishedPlayers[i]
+		local ply = mm_sv_globals.finishedPlayers[i]
 		
 		if IsValid(ply) then
 			
 			if i <= 3 then
-				curPrize = prizePool / 2
+				curPrize = mm_sv_globals.prizePool / 2
 			else
-				curPrize = prizePool / (#finishedPlayers - 3)
+				curPrize = mm_sv_globals.prizePool / (#mm_sv_globals.finishedPlayers - 3)
 				dnfPrize = curPrize * 0.1
 			end
 			
-			prizePool = prizePool - curPrize
+			mm_sv_globals.prizePool = mm_sv_globals.prizePool - curPrize
 			
 			ply:ChatPrint("You placed " .. self:FormatPlace( i ) .. " !! You get " .. tostring(curPrize) .. " credits.")
 			self:ModifyPlayerCredit(ply, curPrize)
@@ -337,7 +339,7 @@ function GM:AwardPrizes()
 		
 	end
 		
-	for k, ply in pairs(playersInRound) do
+	for k, ply in pairs(mm_sv_globals.playersInRound) do
 		
 		if IsValid(ply) then
 			ply:ChatPrint("You didn't finish, but you still get " .. tostring(dnfPrize) .. " credits for trying.")
@@ -357,9 +359,9 @@ function GM:RegisterPlayerFinished( ply )
 		
 		print("Registering " .. tostring(ply) .. " finished the maze")
 		ply.mazesCompleted = ply.mazesCompleted + 1
-		playersInRound[ply.rIndex] = nil
+		mm_sv_globals.playersInRound[ply.rIndex] = nil
 		
-		return table.insert(finishedPlayers, ply)
+		return table.insert(mm_sv_globals.finishedPlayers, ply)
 	
 	end
 
@@ -371,8 +373,8 @@ function GM:RegisterPlayerForRound( ply )
 		
 		print("Registering " .. tostring(ply) .. " for this round")
 		
-		prizePool = prizePool + 1000
-		ply.rIndex = table.insert(playersInRound, ply)
+		mm_sv_globals.prizePool = mm_sv_globals.prizePool + 1000
+		ply.rIndex = table.insert(mm_sv_globals.playersInRound, ply)
 		ply.mazesRan = ply.mazesRan + 1
 	
 	end
@@ -381,9 +383,9 @@ end
 
 function GM:ResetPlayerRegister()
 	
-	playersInRound = {}
-	finishedPlayers = {}
-	prizePool = 0
+	mm_sv_globals.playersInRound = {}
+	mm_sv_globals.finishedPlayers = {}
+	mm_sv_globals.prizePool = 0
 	
 end
 
@@ -396,7 +398,7 @@ function GM:PlayerDisconnected( ply )
 		self:SavePlayerWeapons(ply)
 	end
 	
-	playersOnServer = playersOnServer - 1
+	mm_sv_globals.playersOnServer = mm_sv_globals.playersOnServer - 1
 	
 end
 
@@ -494,7 +496,7 @@ end
 
 function GM:PlayerInitialSpawn( ply )
 
-	playersOnServer = playersOnServer + 1
+	mm_sv_globals.playersOnServer = mm_sv_globals.playersOnServer + 1
 	
 	ply:AllowFlashlight(false)
 	
@@ -620,7 +622,7 @@ function GM:PlayerSelectSpawn(ply)
 	
 	if ply.inMaze then
 	
-		if hasMaze then
+		if mm_sv_globals.hasMaze then
 		
 			local pHull = {}
 				  pHull.min, pHull.max = ply:GetHull()
@@ -837,13 +839,13 @@ function GM:InitPostEntity()
 	
 	exitCam = ents.FindByName( "exit_cam" )[1]
 	
-	miniMapPos = ents.FindByName( "spec_map" )[1]:GetPos()
+	mm_sv_globals.miniMapPos = ents.FindByName( "spec_map" )[1]:GetPos()
 	
-	miniEnt = ents.Create("mini_map")
+	mm_sv_globals.miniEnt = ents.Create("mini_map")
 	
-	miniEnt:SetPos(miniMapPos)
+	mm_sv_globals.miniEnt:SetPos(mm_sv_globals.miniMapPos)
 	
-	miniEnt:Spawn()
+	mm_sv_globals.miniEnt:Spawn()
 	
 	for k,ent in pairs(ents.GetAll()) do
 			
@@ -1015,8 +1017,8 @@ function GM:InitPostEntity()
 		net.WriteVector(mazeZero:GetPos())
 	net.Broadcast()
 	
-	roundEntity = ents.Create("round_controller")
-	roundEntity:Spawn()
+	mm_sv_globals.roundEntity = ents.Create("round_controller")
+	mm_sv_globals.roundEntity:Spawn()
 	
 end
 
@@ -1059,7 +1061,7 @@ function GM:SpawnMazeBlock(x, y, isUD)
 	
 	newBlock:Spawn()
 	
-	blocks[x][y] = newBlock
+	mm_sv_globals.blocks[x][y] = newBlock
 	
 	return newBlock
 	
@@ -1070,7 +1072,7 @@ function GM:EnterMaze( ply )
 
 	if !IsValid(ply) || !ply:IsPlayer() || ply.inMaze then return end 
 	
-	if hasMaze then
+	if mm_sv_globals.hasMaze then
 		
 		if !ply.inMaze then
 			
@@ -1241,10 +1243,10 @@ end
 
 function GM:DestroyMaze()
 	
-	if !hasMaze then return end
+	if !mm_sv_globals.hasMaze then return end
 	
 	self.curMaze = {}
-	hasMaze = false
+	mm_sv_globals.hasMaze = false
 	blocks = {}
 	
 	local plList = player.GetAll()
@@ -1271,7 +1273,7 @@ function GM:DestroyMaze()
 		
 	end
 	
-	for ti, trapName in pairs(traps) do
+	for ti, trapName in pairs(mm_sv_globals.traps) do
 		for k, v in pairs(ents.FindByClass(trapName)) do
 		
 			v:Remove()
@@ -1304,7 +1306,7 @@ function GM:GenerateMazeLive(mazeData, runNum)
 
 	if runNum == nil then 
 		runNum = 0 
-		generatingMaze = true
+		mm_sv_globals.generatingMaze = true
 	end
 	
 	runNum = runNum + 1
@@ -1316,7 +1318,7 @@ function GM:GenerateMazeLive(mazeData, runNum)
 	local wordVommit = false 
 	
 	if mazeData == nil then
-		local plyCountBoost = 2 * (playersOnServer / game.MaxPlayers())
+		local plyCountBoost = 2 * (mm_sv_globals.playersOnServer / game.MaxPlayers())
 		local addX = math.floor( (math.random() * (maxX - minX)) )
 		local addY = math.floor( (math.random() * (maxY - minY)) )
 		
@@ -1444,7 +1446,7 @@ function GM:GenerateMazeLive(mazeData, runNum)
 
 	if mazeData.mazeComplete then
 		
-		generatingMaze = false
+		mm_sv_globals.generatingMaze = false
 		self:CreateMaze(mazeData)
 		
 	else
@@ -1458,9 +1460,9 @@ end
 function GM:CreateMaze(mazeData)
 
 	for x = 0, 29 do
-		blocks[x] = {}
+		mm_sv_globals.blocks[x] = {}
 		for y = 0, 29 do
-			blocks[x][y] = nil
+			mm_sv_globals.blocks[x][y] = nil
 		end
 	end
 	
@@ -1482,7 +1484,7 @@ function GM:CreateMaze(mazeData)
 				
 				local curSpot = mazeData[z][x][y]
 				
-				local curBlock = blocks[x][y]
+				local curBlock = mm_sv_globals.blocks[x][y]
 				
 				if curBlock == nil then
 					
@@ -1536,7 +1538,7 @@ function GM:CreateMaze(mazeData)
 						
 						local newTrapPos = rndTrapSpot.Pos
 						
-						local newTrap = ents.Create(traps[math.ceil(math.random() * #traps)])
+						local newTrap = ents.Create(mm_sv_globals.traps[math.ceil(math.random() * #mm_sv_globals.traps)])
 						
 						newTrap:Spawn()
 						
@@ -1601,9 +1603,9 @@ function GM:CreateMaze(mazeData)
 	
 	self.curMaze = mazeData
 	
-	self.roundEnt:SetRoundTimeByName("in", ((curX * curY * 2) * 4) + (playersOnServer * 2))
+	self.roundEnt:SetRoundTimeByName("in", ((curX * curY * 2) * 4) + (mm_sv_globals.playersOnServer * 2))
 	
-	hasMaze = true
+	mm_sv_globals.hasMaze = true
 	
 	self:OpenEntrance()
 	
