@@ -5,17 +5,19 @@ GM.Website 	= ""
 
 DEFINE_BASECLASS( "gamemode_base")
 
-countDownSounds = {}
-countDownSounds[0] = "npc/overwatch/radiovoice/zero.wav"
-countDownSounds[1] = "npc/overwatch/radiovoice/one.wav"
-countDownSounds[2] = "npc/overwatch/radiovoice/two.wav"
-countDownSounds[3] = "npc/overwatch/radiovoice/three.wav"
-countDownSounds[4] = "npc/overwatch/radiovoice/four.wav"
-countDownSounds[5] = "npc/overwatch/radiovoice/five.wav"
-countDownSounds[6] = "npc/overwatch/radiovoice/six.wav"
-countDownSounds[7] = "npc/overwatch/radiovoice/seven.wav"
-countDownSounds[8] = "npc/overwatch/radiovoice/eight.wav"
-countDownSounds[9] = "npc/overwatch/radiovoice/nine.wav"
+mm_sh_globals = {}
+
+mm_sh_globals.countDownSounds = {}
+mm_sh_globals.countDownSounds[0] = "npc/overwatch/radiovoice/zero.wav"
+mm_sh_globals.countDownSounds[1] = "npc/overwatch/radiovoice/one.wav"
+mm_sh_globals.countDownSounds[2] = "npc/overwatch/radiovoice/two.wav"
+mm_sh_globals.countDownSounds[3] = "npc/overwatch/radiovoice/three.wav"
+mm_sh_globals.countDownSounds[4] = "npc/overwatch/radiovoice/four.wav"
+mm_sh_globals.countDownSounds[5] = "npc/overwatch/radiovoice/five.wav"
+mm_sh_globals.countDownSounds[6] = "npc/overwatch/radiovoice/six.wav"
+mm_sh_globals.countDownSounds[7] = "npc/overwatch/radiovoice/seven.wav"
+mm_sh_globals.countDownSounds[8] = "npc/overwatch/radiovoice/eight.wav"
+mm_sh_globals.countDownSounds[9] = "npc/overwatch/radiovoice/nine.wav"
 
 -- npc/overwatch/radiovoice/citizen.wav
 -- npc/overwatch/radiovoice/quick.wav
@@ -26,16 +28,16 @@ countDownSounds[9] = "npc/overwatch/radiovoice/nine.wav"
 -- npc/overwatch/radiovoice/zone.wav
 
 
-items = include("items.lua")
+mm_sh_globals.items = include("items.lua")
 
-females  =  { "models/player/group01/female_01.mdl", 
+mm_sh_globals.females  =  { "models/player/group01/female_01.mdl", 
 			  "models/player/group01/female_02.mdl",
 			  "models/player/group01/female_03.mdl",
 			  "models/player/group01/female_04.mdl",
 			  "models/player/group01/female_05.mdl",
 			  "models/player/group01/female_06.mdl" }
 	
-males   =  {  "models/player/group01/male_01.mdl", 
+mm_sh_globals.males   =  {  "models/player/group01/male_01.mdl", 
 			  "models/player/group01/male_02.mdl",
 			  "models/player/group01/male_03.mdl",
 			  "models/player/group01/male_04.mdl",
@@ -45,24 +47,24 @@ males   =  {  "models/player/group01/male_01.mdl",
 			  "models/player/group01/male_08.mdl",
 			  "models/player/group01/male_09.mdl" }
 			  
-blockSizes = Vector(528, -528, 216)
+mm_sh_globals.blockSizes = Vector(528, -528, 216)
 
-maxX = 6
-minY = 3
+mm_sh_globals.maxX = 6
+mm_sh_globals.minY = 3
 
-maxY = 6
-minX = 3
+mm_sh_globals.maxY = 6
+mm_sh_globals.minX = 3
 
-curX = 0
-curY = 0
+mm_sh_globals.curX = 0
+mm_sh_globals.curY = 0
 
-dirPairs = {}
-	dirPairs["d"] = "u"
-	dirPairs["u"] = "d"
-	dirPairs["e"] = "w"
-	dirPairs["w"] = "e"
-	dirPairs["n"] = "s"
-	dirPairs["s"] = "n"
+mm_sh_globals.dirPairs = {}
+mm_sh_globals.dirPairs["d"] = "u"
+mm_sh_globals.dirPairs["u"] = "d"
+mm_sh_globals.dirPairs["e"] = "w"
+mm_sh_globals.dirPairs["w"] = "e"
+mm_sh_globals.dirPairs["n"] = "s"
+mm_sh_globals.dirPairs["s"] = "n"
 	
 GM.curMaze = {}
 	
@@ -128,9 +130,9 @@ function GetPlayerMapPos(ply)
 	
 	plyPos = ply:GetPos() + Vector(0,0,64)
 	
-	local result = Vector( math.floor((plyPos.x / blockSizes.x) + 15), 
-						   math.floor((plyPos.y / blockSizes.y) + 15), 
-						   math.abs(math.floor( plyPos.z / blockSizes.z)) )
+	local result = Vector( math.floor((plyPos.x / mm_sh_globals.blockSizes.x) + 15), 
+						   math.floor((plyPos.y / mm_sh_globals.blockSizes.y) + 15), 
+						   math.abs(math.floor( plyPos.z / mm_sh_globals.blockSizes.z)) )
 		
 	return result
 						   
@@ -138,16 +140,16 @@ end
 
 function GetBlockWorldPos( pos )
 			
-	return Vector( (pos.x - 15) * blockSizes.x,
-				   (pos.y - 15) * blockSizes.y,
-				   (pos.z) * blockSizes.z )
+	return Vector( (pos.x - 15) * mm_sh_globals.blockSizes.x,
+				   (pos.y - 15) * mm_sh_globals.blockSizes.y,
+				   (pos.z) * mm_sh_globals.blockSizes.z )
 		   
 end
 
 function IsInMaze( pos )
 	
-	if ( pos.x >= 0 && pos.x < curX ) &&
-	   ( pos.y >= 0 && pos.y < curY ) &&
+	if ( pos.x >= 0 && pos.x < mm_sh_globals.curX ) &&
+	   ( pos.y >= 0 && pos.y < mm_sh_globals.curY ) &&
 	   ( pos.z >= 0 && pos.z <= 1 ) then
 	   
 	   return true
@@ -235,11 +237,11 @@ function GM:drawMapToString(level, ply, mazeData)
 		z = 1
 	end
 	
-	for y = 0, curY - 1 do
+	for y = 0, mm_sh_globals.curY - 1 do
 		
 		while scanStage <= 2 do
 			
-			for x = -1, curX - 2 do
+			for x = -1, mm_sh_globals.curX - 2 do
 				
 				if !mazeData then
 					mazeData = {}

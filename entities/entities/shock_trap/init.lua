@@ -21,7 +21,7 @@ function ENT:Deploy(depSpot)
 	
 	local traceData = {}
 		  traceData.start = depSpot
-		  traceData.endpos = traceData.start + Vector(0,0,blockSizes.z)
+		  traceData.endpos = traceData.start + Vector(0,0,mm_sh_globals.blockSizes.z)
 		  traceData.filter = {self}
 		  
 	local traceRes = util.TraceLine(traceData)
