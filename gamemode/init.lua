@@ -463,7 +463,7 @@ function GM:LoadPlayerInfo(ply)
 	else
 		
 		ply.credits = 0
-		self:ModifyPlayerCredit(ply, 1000)
+		self:ModifyPlayerCredit(ply, 2500)
 		
 	end
 	
