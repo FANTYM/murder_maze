@@ -13,7 +13,7 @@ function ENT:Initialize()
 
 	self:createRound( "between", 30, "Intermission", 2, true, function() GAMEMODE:GenerateMazeLive() end, false)
 	self:createRound( "wait", -1, { "Generating Maze ..." }, 0.5, true, function() end, false, function() return !generatingMaze end)
-	self:createRound( "pre", 10, { "Opening maze, hurry to the portal." }, 1, true, function() GAMEMODE:CloseEntrance()  end, false)
+	self:createRound( "pre", 20, { "Opening maze, hurry to the portal." }, 1, true, function() GAMEMODE:CloseEntrance()  end, false)
 	self:createRound( "in", 3000,  "Welcome to the Murder Maze!!!!", -1, true, function() GAMEMODE:DestroyMaze() GAMEMODE:AwardPrizes() GAMEMODE:SaveAllPlayers() end, false)
 	
 	self:ChangeRound()
