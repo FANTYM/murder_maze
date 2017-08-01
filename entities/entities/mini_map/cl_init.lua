@@ -312,21 +312,21 @@ function ENT:Think()
 		
 		-- Calculate square corners from min/max
 		-- Bottom
-		self.corners[0] = Vector(0,0,0.5) + self.mapMin + (Vector(mm_sh_globals.blockSizes.x * -0.5, mm_sh_globals.blockSizes.y * 0.5, mm_sh_globals.blockSizes.z * (-1 * self.scanPerc) ) * self.mapScale)
-		self.corners[1] = Vector(self.mapMin.x, self.mapMax.y, self.mapMin.z + 0.5) + (Vector(mm_sh_globals.blockSizes.x * -0.5, mm_sh_globals.blockSizes.y * -0.5, mm_sh_globals.blockSizes.z * (-1 * self.scanPerc) ) * self.mapScale)
-		self.corners[2] = Vector(self.mapMax.x, self.mapMax.y, self.mapMin.z + 0.5) + (Vector(mm_sh_globals.blockSizes.x * 0.5, mm_sh_globals.blockSizes.y * -0.5, mm_sh_globals.blockSizes.z * (-1 * self.scanPerc)  ) * self.mapScale)
-		self.corners[3] = Vector(self.mapMax.x, self.mapMin.y, self.mapMin.z + 0.5) + (Vector(mm_sh_globals.blockSizes.x * 0.5, mm_sh_globals.blockSizes.y * 0.5, mm_sh_globals.blockSizes.z * (-1 * self.scanPerc)  ) * self.mapScale)
+		self.corners[0] = Vector(0,0,0.5) + self.mapMin + (Vector(blockSizes.x * -0.5, blockSizes.y * 0.5, blockSizes.z * (-1 * self.scanPerc) ) * self.mapScale)
+		self.corners[1] = Vector(self.mapMin.x, self.mapMax.y, self.mapMin.z + 0.5) + (Vector(blockSizes.x * -0.5, blockSizes.y * -0.5, blockSizes.z * (-1 * self.scanPerc) ) * self.mapScale)
+		self.corners[2] = Vector(self.mapMax.x, self.mapMax.y, self.mapMin.z + 0.5) + (Vector(blockSizes.x * 0.5, blockSizes.y * -0.5, blockSizes.z * (-1 * self.scanPerc)  ) * self.mapScale)
+		self.corners[3] = Vector(self.mapMax.x, self.mapMin.y, self.mapMin.z + 0.5) + (Vector(blockSizes.x * 0.5, blockSizes.y * 0.5, blockSizes.z * (-1 * self.scanPerc)  ) * self.mapScale)
 		
 		--Top
-		self.corners[4] = self.mapMin + (Vector(mm_sh_globals.blockSizes.x * -0.5, mm_sh_globals.blockSizes.y * 0.5, (mm_sh_globals.blockSizes.z * self.invPerc) + mm_sh_globals.blockSizes.z * (-1 * self.scanPerc) ) * self.mapScale)
-		self.corners[5] = Vector(self.mapMin.x, self.mapMax.y, self.mapMin.z) + (Vector(mm_sh_globals.blockSizes.x * -0.5, mm_sh_globals.blockSizes.y * -0.5, (mm_sh_globals.blockSizes.z * self.invPerc) + mm_sh_globals.blockSizes.z * (-1 * self.scanPerc) ) * self.mapScale)
-		self.corners[6] = Vector(self.mapMax.x, self.mapMax.y, self.mapMin.z) + (Vector(mm_sh_globals.blockSizes.x * 0.5, mm_sh_globals.blockSizes.y * -0.5, (mm_sh_globals.blockSizes.z * self.invPerc) + mm_sh_globals.blockSizes.z * (-1 * self.scanPerc)  ) * self.mapScale)
-		self.corners[7] = Vector(self.mapMax.x, self.mapMin.y, self.mapMin.z) + (Vector(mm_sh_globals.blockSizes.x * 0.5, mm_sh_globals.blockSizes.y * 0.5, (mm_sh_globals.blockSizes.z * self.invPerc) + mm_sh_globals.blockSizes.z * (-1 * self.scanPerc)  ) * self.mapScale)
+		self.corners[4] = self.mapMin + (Vector(blockSizes.x * -0.5, blockSizes.y * 0.5, (blockSizes.z * self.invPerc) + blockSizes.z * (-1 * self.scanPerc) ) * self.mapScale)
+		self.corners[5] = Vector(self.mapMin.x, self.mapMax.y, self.mapMin.z) + (Vector(blockSizes.x * -0.5, blockSizes.y * -0.5, (blockSizes.z * self.invPerc) + blockSizes.z * (-1 * self.scanPerc) ) * self.mapScale)
+		self.corners[6] = Vector(self.mapMax.x, self.mapMax.y, self.mapMin.z) + (Vector(blockSizes.x * 0.5, blockSizes.y * -0.5, (blockSizes.z * self.invPerc) + blockSizes.z * (-1 * self.scanPerc)  ) * self.mapScale)
+		self.corners[7] = Vector(self.mapMax.x, self.mapMin.y, self.mapMin.z) + (Vector(blockSizes.x * 0.5, blockSizes.y * 0.5, (blockSizes.z * self.invPerc) + blockSizes.z * (-1 * self.scanPerc)  ) * self.mapScale)
 		
 		-- Calculate offset from maze that is relative to final offset of miniMap
-		self.drawOffset = mm_cl_globals.mazeZero + (Vector( ((mm_sh_globals.curX - 1) * mm_sh_globals.blockSizes.x) * 0.5, 
-											  ((mm_sh_globals.curY - 1) * mm_sh_globals.blockSizes.y) * 0.5,
-											   mm_sh_globals.blockSizes.z * -1.89 ))
+		self.drawOffset = mm_cl_globals.mazeZero + (Vector( ((curX - 1) * blockSizes.x) * 0.5, 
+											  ((curY - 1) * blockSizes.y) * 0.5,
+											   blockSizes.z * -1.89 ))
 		
 		-- Run beam section vairiables to animate the beams
 		self.beamSectionStart = self.beamSectionStart - ((2 * self.invPerc) * self.thinkDelta)

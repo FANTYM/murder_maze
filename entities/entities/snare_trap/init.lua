@@ -21,7 +21,7 @@ function ENT:Deploy(depSpot)
 	
 	local traceData = {}
 		  traceData.start = depSpot
-		  traceData.endpos = traceData.start + Vector(0,0,-mm_sh_globals.blockSizes.z)
+		  traceData.endpos = traceData.start + Vector(0,0,-blockSizes.z)
 		  traceData.filter = {self}
 		  
 	local traceRes = util.TraceLine(traceData)
@@ -85,7 +85,7 @@ function ENT:Think()
 					
 					if plyIndex < 0 then
 						
-						ent:SetVelocity(self:GetPos() - traceData.endpos)
+						ent:SetVelocity((self:GetPos() - traceData.endpos) * 3)
 						
 						ent.snared = true
 						
@@ -93,7 +93,6 @@ function ENT:Think()
 														ent.snared = false
 													end 
 										end)
-										
 						timer.Simple(2, function() self.snareList[plyIndex] = nil end)
 					
 					end

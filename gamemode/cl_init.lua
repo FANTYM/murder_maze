@@ -163,8 +163,8 @@ net.Receive( "hud_message", function(len, ply)
 								
 net.Receive( "update_maze_size", function(len, ply)
 									
-									mm_sh_globals.curX = net.ReadInt(32)
-									mm_sh_globals.curY = net.ReadInt(32)
+									curX = net.ReadInt(32)
+									curY = net.ReadInt(32)
 																		
 								end )
 								
@@ -218,8 +218,8 @@ function GM:RenderMapToRT(level)
 		z = 1
 	end
 	
-	local blockSizeX = math.floor(mm_cl_globals.miniMapHudTexture:Width() / mm_sh_globals.curX)
-	local blockSizeY = math.floor(mm_cl_globals.miniMapHudTexture:Height() / mm_sh_globals.curY)
+	local blockSizeX = math.floor(mm_cl_globals.miniMapHudTexture:Width() / curX)
+	local blockSizeY = math.floor(mm_cl_globals.miniMapHudTexture:Height() / curY)
 	
 	if blockSizeX > blockSizeY then
 		blockSizeX = blockSizeY 
@@ -238,9 +238,9 @@ function GM:RenderMapToRT(level)
 		
 		render.SetViewPort(0,0, mm_cl_globals.hudRTSize, mm_cl_globals.hudRTSize)
 		
-		for y = 0, mm_sh_globals.curY - 1 do
+		for y = 0, curY - 1 do
 			
-			for x = 0, mm_sh_globals.curX - 1 do
+			for x = 0, curX - 1 do
 				
 				if !self.curMaze then
 					self.curMaze = {}
@@ -390,8 +390,8 @@ function CleanUpMaze()
 			
 			end
 			
-			mm_sh_globals.curX = 0
-			mm_sh_globals.curY = 0
+			curX = 0
+			curY = 0
 			
 			GAMEMODE.curMaze = {}
 			
@@ -417,9 +417,9 @@ function GM:Think()
 		
 		if (CurTime() > mm_cl_globals.canNextSound) && curNum != mm_cl_globals.lastNum then
 			
-			surface.PlaySound(mm_sh_globals.countDownSounds[curNum])
+			surface.PlaySound(countDownSounds[curNum])
 			
-			mm_cl_globals.canNextSound = CurTime() + SoundDuration(mm_sh_globals.countDownSounds[curNum])
+			mm_cl_globals.canNextSound = CurTime() + SoundDuration(countDownSounds[curNum])
 			
 			mm_cl_globals.lastNum = curNum
 			
@@ -461,7 +461,7 @@ function GM:Think()
 	
 	end
 	
-	if mm_sh_globals.curX == 0 || mm_sh_globals.curY == 0 then
+	if curX == 0 || curY == 0 then
 		
 		net.Start("req_maze_size")
 		net.SendToServer()
@@ -672,7 +672,7 @@ function GM:GetPlayerBlock()
 	
 	local blockPos = GetBlockWorldPos(plyMapPos) * Vector(1,1,1)
 	
-	local blockList = ents.FindInBox( blockPos - (mm_sh_globals.blockSizes * 0.5), blockPos + (mm_sh_globals.blockSizes * 0.5) ) 
+	local blockList = ents.FindInBox( blockPos - (blockSizes * 0.5), blockPos + (blockSizes * 0.5) ) 
 	local blockEnt = nil
 	local cDist = 640000
 	
@@ -747,7 +747,7 @@ function openStore(len, ply)
 	local longest = 0
 	local widest = 0
 	
-	for itemNumber, item in pairs(mm_sh_globals.items) do
+	for itemNumber, item in pairs(items) do
 		
 		if item.class == "internal" then continue end
 		
@@ -889,7 +889,7 @@ function openPlayer(len, ply)
 	local spawnIconWidth = (((mm_cl_globals.playerMenu:GetWide() - totalHorizontalOffset) * 0.5) / maxCols) - rowPad
 	local spawnIconHeight = spawnIconWidth
 	
-	for k, plyModel in pairs(mm_sh_globals.males) do
+	for k, plyModel in pairs(males) do
 			
 		local toolTip = "Male"
 		
@@ -932,7 +932,7 @@ function openPlayer(len, ply)
 	colCount = 0
 	rowCount = 0
 	
-	for k, plyModel in pairs(mm_sh_globals.females) do
+	for k, plyModel in pairs(females) do
 			
 		local toolTip = "Female"
 		
