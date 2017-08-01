@@ -63,10 +63,8 @@ function ENT:DrawTranslucent()
 	local entDist = (LocalPlayer():GetPos() - self:GetPos()):Length()
 	if ( entDist > 1584) then return end
 	
-	if !mm_cl_globals then return end
-	
 	-- If the maze is open and local player is not in the maze, draw the map
-	if !mm_cl_globals.inMaze && self.mapIsOpen then
+	if !inMaze && self.mapIsOpen then
 		
 		-- Reset map min/max, this is for the beams
 		self.mapMin = Vector(0,0,0)
@@ -249,8 +247,6 @@ function ENT:Think()
 	--Assign self to GAMEMODE table for global access to the miniMap entity
 	GAMEMODE.mapEnt = self
 	
-	if !mm_cl_globals then return end
-	
 	-- Fixes a bug where even though I set self.lastThink in initalize it goes nil
 	if !self.lastThink then
 		self.lastThink = CurTime() - math.random()
@@ -264,7 +260,7 @@ function ENT:Think()
 	if !GAMEMODE.roundEnt then return end
 	
 	-- if local player is not in the maze and we are in round "in" or "ending", continue gather maze info
-	if !mm_cl_globals.inMaze && ((GAMEMODE.roundEnt:GetCurrentTitle() == "in") || (GAMEMODE.roundEnt:GetCurrentTitle() == "ending")) then
+	if !inMaze && ((GAMEMODE.roundEnt:GetCurrentTitle() == "in") || (GAMEMODE.roundEnt:GetCurrentTitle() == "ending")) then
 			
 		-- Gather maze_block and maze_door entities, assign them as render ents
 		local tempEnts = ents.FindByClass("maze_block")
@@ -324,7 +320,7 @@ function ENT:Think()
 		self.corners[7] = Vector(self.mapMax.x, self.mapMin.y, self.mapMin.z) + (Vector(blockSizes.x * 0.5, blockSizes.y * 0.5, (blockSizes.z * self.invPerc) + blockSizes.z * (-1 * self.scanPerc)  ) * self.mapScale)
 		
 		-- Calculate offset from maze that is relative to final offset of miniMap
-		self.drawOffset = mm_cl_globals.mazeZero + (Vector( ((curX - 1) * blockSizes.x) * 0.5, 
+		self.drawOffset = mazeZero + (Vector( ((curX - 1) * blockSizes.x) * 0.5, 
 											  ((curY - 1) * blockSizes.y) * 0.5,
 											   blockSizes.z * -1.89 ))
 		
