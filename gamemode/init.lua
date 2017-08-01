@@ -1561,7 +1561,7 @@ function GM:CreateMaze(mazeData)
 							
 							exitDir = rndDoorDir
 							exitPos = Vector(x,y,z)
-							exitEnt = rndDoor
+							mm_cl_globals.exitEnt = rndDoor
 							placedExit = true
 							rndDoor:SetIsExit(true)
 							

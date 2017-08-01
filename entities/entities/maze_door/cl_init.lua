@@ -47,8 +47,9 @@ function ENT:Think()
 
 	if (self:GetIsExit()) then 
 		
+		if !mm_cl_globals then return end
 		
-		exitEnt = self
+		mm_cl_globals.exitEnt = self
 		
 		if !self.didExitDoorInit then
 			
@@ -80,7 +81,7 @@ function ENT:Draw()
 		
 		self:DrawModel()
 		
-		render.DrawQuadEasy(self.drawPos, -self:GetForward(), 80 * aspectH, 80 , Color(255,255,255,255), 180)
+		render.DrawQuadEasy(self.drawPos, -self:GetForward(), 80 * mm_cl_globals.aspectH, 80 , Color(255,255,255,255), 180)
 	  
 		render.MaterialOverride()
 	
