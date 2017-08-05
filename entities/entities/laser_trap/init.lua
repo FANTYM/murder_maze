@@ -50,6 +50,8 @@ end
 
 function ENT:Think()
 
+	if !self.lastThink then self.lastThink = CurTime() end
+	
 	self.thinkDelta = CurTime() - self.lastThink
 	self.lastThink = CurTime()
 		
