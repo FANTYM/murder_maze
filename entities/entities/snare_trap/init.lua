@@ -93,7 +93,7 @@ function ENT:Think()
 														ent.snared = false
 													end 
 										end)
-						timer.Simple(2, function() self.snareList[plyIndex] = nil end)
+						timer.Simple(2, function() if self.snareList then self.snareList[plyIndex] = nil end end)
 					
 					end
 				
