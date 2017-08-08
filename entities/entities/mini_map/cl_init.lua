@@ -46,6 +46,7 @@ function ENT:Initialize()
 	self.timeMarker = CurTime()
 	self.thinkDelta = 0
 	
+	
 	-- Open/Close tracking variable
 	self.mapIsOpen = false
 	
@@ -256,12 +257,33 @@ function ENT:Think()
 	self.thinkDelta = CurTime() - self.lastThink
 	self.lastThink = CurTime()
 	
+	
+
+	
 	-- If round entity isn't know then exit, we'll try again later
 	if !mmGlobals.roundEntity then return end
 	
 	-- if local player is not in the maze and we are in round "in" or "ending", continue gather maze info
 	if !mmGlobals.inMaze && ((mmGlobals.roundEntity:GetCurrentTitle() == "in") || (mmGlobals.roundEntity:GetCurrentTitle() == "ending")) then
+		
+		if !self.light then
+			self.light = DynamicLight(self:EntIndex())
+		end
+		
+		if self.light then
 			
+			self.light.pos = self:GetPos()
+			self.light.r = 0
+			self.light.g = 0
+			self.light.b = 218
+			self.light.brightness = (mmGlobals.mazeCurSize.x + mmGlobals.mazeCurSize.y) * 0.65
+			self.light.Decay = 1000
+			self.light.Size = 512
+			self.light.DieTime = CurTime() + self.thinkDelta
+		
+		
+		end
+
 		-- Gather maze_block and maze_door entities, assign them as render ents
 		local tempEnts = ents.FindByClass("maze_block")
 		table.Add(tempEnts, ents.FindByClass("maze_door"))
