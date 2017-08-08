@@ -64,7 +64,7 @@ function ENT:DrawTranslucent()
 	if ( entDist > 1584) then return end
 	
 	-- If the maze is open and local player is not in the maze, draw the map
-	if !inMaze && self.mapIsOpen then
+	if !mmGlobals.inMaze && self.mapIsOpen then
 		
 		-- Reset map min/max, this is for the beams
 		self.mapMin = Vector(0,0,0)
@@ -227,7 +227,7 @@ function ENT:DrawTranslucent()
 		-- Draw plyMat (sprite) for each player in the map, in their color
 		render.SetMaterial(self.plyMat)
 		for k, ply in pairs(player.GetAll()) do
-			if IsInMaze(GetPlayerMapPos(ply)) then
+			if IsInMaze(getMapPos(ply:GetPos() + Vector(0,0,64))) then
 				
 				local plyClr = ply:GetPlayerColor()
 				render.DrawSprite( self:GetPos() + (((ply:GetPos() - self.drawOffset ) + Vector(0,0,48)) * self.mapScale), 120 * self.mapScale, 120 * self.mapScale, Color(plyClr.r * 255, plyClr.g * 255, plyClr.b * 255, 255) )
@@ -257,10 +257,10 @@ function ENT:Think()
 	self.lastThink = CurTime()
 	
 	-- If round entity isn't know then exit, we'll try again later
-	if !GAMEMODE.roundEnt then return end
+	if !mmGlobals.roundEntity then return end
 	
 	-- if local player is not in the maze and we are in round "in" or "ending", continue gather maze info
-	if !inMaze && ((GAMEMODE.roundEnt:GetCurrentTitle() == "in") || (GAMEMODE.roundEnt:GetCurrentTitle() == "ending")) then
+	if !mmGlobals.inMaze && ((mmGlobals.roundEntity:GetCurrentTitle() == "in") || (mmGlobals.roundEntity:GetCurrentTitle() == "ending")) then
 			
 		-- Gather maze_block and maze_door entities, assign them as render ents
 		local tempEnts = ents.FindByClass("maze_block")
@@ -268,7 +268,7 @@ function ENT:Think()
 		self.renderEnts = tempEnts
 		
 		-- Open and Close map depending on round time and if map is open or close
-		if self.mapIsOpen && (GAMEMODE.roundEnt:GetTimeLeft()) <= (self.closeTime * 1.25) then
+		if self.mapIsOpen && (mmGlobals.roundEntity:GetTimeLeft()) <= (self.closeTime * 1.25) then
 			--print("Closing map...")
 				self.scanDir = 1
 				self.timeMarker = CurTime()
@@ -276,7 +276,7 @@ function ENT:Think()
 			--print("time's almost up, closing map...")
 		end
 		
-		if !self.mapIsOpen && (GAMEMODE.roundEnt:GetTimeLeft()) > (self.closeTime * 1.25) then
+		if !self.mapIsOpen && (mmGlobals.roundEntity:GetTimeLeft()) > (self.closeTime * 1.25) then
 			
 			--print("Opening map...")
 			self.scanDir = -1
@@ -308,21 +308,21 @@ function ENT:Think()
 		
 		-- Calculate square corners from min/max
 		-- Bottom
-		self.corners[0] = Vector(0,0,0.5) + self.mapMin + (Vector(blockSizes.x * -0.5, blockSizes.y * 0.5, blockSizes.z * (-1 * self.scanPerc) ) * self.mapScale)
-		self.corners[1] = Vector(self.mapMin.x, self.mapMax.y, self.mapMin.z + 0.5) + (Vector(blockSizes.x * -0.5, blockSizes.y * -0.5, blockSizes.z * (-1 * self.scanPerc) ) * self.mapScale)
-		self.corners[2] = Vector(self.mapMax.x, self.mapMax.y, self.mapMin.z + 0.5) + (Vector(blockSizes.x * 0.5, blockSizes.y * -0.5, blockSizes.z * (-1 * self.scanPerc)  ) * self.mapScale)
-		self.corners[3] = Vector(self.mapMax.x, self.mapMin.y, self.mapMin.z + 0.5) + (Vector(blockSizes.x * 0.5, blockSizes.y * 0.5, blockSizes.z * (-1 * self.scanPerc)  ) * self.mapScale)
+		self.corners[0] = Vector(0,0,0.5) + self.mapMin + (Vector(mmGlobals.blockSizes.x * -0.5, mmGlobals.blockSizes.y * 0.5, mmGlobals.blockSizes.z * (-1 * self.scanPerc) ) * self.mapScale)
+		self.corners[1] = Vector(self.mapMin.x, self.mapMax.y, self.mapMin.z + 0.5) + (Vector(mmGlobals.blockSizes.x * -0.5, mmGlobals.blockSizes.y * -0.5, mmGlobals.blockSizes.z * (-1 * self.scanPerc) ) * self.mapScale)
+		self.corners[2] = Vector(self.mapMax.x, self.mapMax.y, self.mapMin.z + 0.5) + (Vector(mmGlobals.blockSizes.x * 0.5, mmGlobals.blockSizes.y * -0.5, mmGlobals.blockSizes.z * (-1 * self.scanPerc)  ) * self.mapScale)
+		self.corners[3] = Vector(self.mapMax.x, self.mapMin.y, self.mapMin.z + 0.5) + (Vector(mmGlobals.blockSizes.x * 0.5, mmGlobals.blockSizes.y * 0.5, mmGlobals.blockSizes.z * (-1 * self.scanPerc)  ) * self.mapScale)
 		
 		--Top
-		self.corners[4] = self.mapMin + (Vector(blockSizes.x * -0.5, blockSizes.y * 0.5, (blockSizes.z * self.invPerc) + blockSizes.z * (-1 * self.scanPerc) ) * self.mapScale)
-		self.corners[5] = Vector(self.mapMin.x, self.mapMax.y, self.mapMin.z) + (Vector(blockSizes.x * -0.5, blockSizes.y * -0.5, (blockSizes.z * self.invPerc) + blockSizes.z * (-1 * self.scanPerc) ) * self.mapScale)
-		self.corners[6] = Vector(self.mapMax.x, self.mapMax.y, self.mapMin.z) + (Vector(blockSizes.x * 0.5, blockSizes.y * -0.5, (blockSizes.z * self.invPerc) + blockSizes.z * (-1 * self.scanPerc)  ) * self.mapScale)
-		self.corners[7] = Vector(self.mapMax.x, self.mapMin.y, self.mapMin.z) + (Vector(blockSizes.x * 0.5, blockSizes.y * 0.5, (blockSizes.z * self.invPerc) + blockSizes.z * (-1 * self.scanPerc)  ) * self.mapScale)
+		self.corners[4] = self.mapMin + (Vector(mmGlobals.blockSizes.x * -0.5, mmGlobals.blockSizes.y * 0.5, (mmGlobals.blockSizes.z * self.invPerc) + mmGlobals.blockSizes.z * (-1 * self.scanPerc) ) * self.mapScale)
+		self.corners[5] = Vector(self.mapMin.x, self.mapMax.y, self.mapMin.z) + (Vector(mmGlobals.blockSizes.x * -0.5, mmGlobals.blockSizes.y * -0.5, (mmGlobals.blockSizes.z * self.invPerc) + mmGlobals.blockSizes.z * (-1 * self.scanPerc) ) * self.mapScale)
+		self.corners[6] = Vector(self.mapMax.x, self.mapMax.y, self.mapMin.z) + (Vector(mmGlobals.blockSizes.x * 0.5, mmGlobals.blockSizes.y * -0.5, (mmGlobals.blockSizes.z * self.invPerc) + mmGlobals.blockSizes.z * (-1 * self.scanPerc)  ) * self.mapScale)
+		self.corners[7] = Vector(self.mapMax.x, self.mapMin.y, self.mapMin.z) + (Vector(mmGlobals.blockSizes.x * 0.5, mmGlobals.blockSizes.y * 0.5, (mmGlobals.blockSizes.z * self.invPerc) + mmGlobals.blockSizes.z * (-1 * self.scanPerc)  ) * self.mapScale)
 		
 		-- Calculate offset from maze that is relative to final offset of miniMap
-		self.drawOffset = mazeZero + (Vector( ((curX - 1) * blockSizes.x) * 0.5, 
-											  ((curY - 1) * blockSizes.y) * 0.5,
-											   blockSizes.z * -1.89 ))
+		self.drawOffset = mmGlobals.mazeZero + (Vector( ((mmGlobals.mazeCurSize.x - 1) * mmGlobals.blockSizes.x) * 0.5, 
+											  ((mmGlobals.mazeCurSize.y - 1) * mmGlobals.blockSizes.y) * 0.5,
+											    mmGlobals.blockSizes.z * -1.89 ))
 		
 		-- Run beam section vairiables to animate the beams
 		self.beamSectionStart = self.beamSectionStart - ((2 * self.invPerc) * self.thinkDelta)

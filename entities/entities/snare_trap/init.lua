@@ -6,7 +6,9 @@ include( "shared.lua" )
 function ENT:Initialize()
 
 	self:SetModel("models/mm/snare_trap.mdl")
-	self:PhysicsInitStatic(SOLID_VPHYSICS)
+	--self:PhysicsInitStatic(SOLID_VPHYSICS)
+	self:PhysicsInit(SOLID_VPHYSICS)
+	self:PhysicsInitShadow(false, false)
 	self:SetMoveType(MOVETYPE_NONE)
 	
 	self.lastThink = CurTime()
@@ -21,7 +23,7 @@ function ENT:Deploy(depSpot)
 	
 	local traceData = {}
 		  traceData.start = depSpot
-		  traceData.endpos = traceData.start + Vector(0,0,-blockSizes.z)
+		  traceData.endpos = traceData.start + Vector(0,0,-mmGlobals.blockSizes.z)
 		  traceData.filter = {self}
 		  
 	local traceRes = util.TraceLine(traceData)
@@ -55,7 +57,7 @@ function ENT:Think()
 	self.thinkDelta = CurTime() - self.lastThink
 	self.lastThink = CurTime()
 		
-	if GAMEMODE.roundEnt:GetCurrentTitle() != "in" then return end
+	if mmGlobals.roundEntity && mmGlobals.roundEntity:GetCurrentTitle() != "in" then return end
 	
 	local snareables = ents.FindInSphere(self:GetPos(), 196)
 	--PrintTable(snareables)
@@ -85,7 +87,7 @@ function ENT:Think()
 					
 					if plyIndex < 0 then
 						
-						ent:SetVelocity((self:GetPos() - traceData.endpos) * 3)
+						ent:SetVelocity(ent:GetVelocity() + ((self:GetPos() - traceData.endpos) * 3))
 						
 						ent.snared = true
 						

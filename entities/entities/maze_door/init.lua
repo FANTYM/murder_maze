@@ -24,9 +24,9 @@ function ENT:StartTouch( ent )
 			GAMEMODE:TeleportToExit(ent)
 			GAMEMODE:RegisterPlayerFinished(ent)
 	
-			if GAMEMODE.roundEnt:GetTimeLeft() > 30 then
-				GAMEMODE.roundEnt:createRound("ending", 30,"This maze has been solved, hurry up and finish before it closes!!!" , 0.25, false, function()  GAMEMODE:DestroyMaze() GAMEMODE:AwardPrizes() GAMEMODE:SaveAllPlayers()  end, true )
-				GAMEMODE.roundEnt:ChangeRound(true)
+			if mmGlobals.roundEntity:GetTimeLeft() > 30 then
+				mmGlobals.roundEntity:createRound("ending", 30,"This maze has been solved, hurry up and finish before it closes!!!" , 0.25, false, function()  GAMEMODE:DestroyMaze() GAMEMODE:AwardPrizes() GAMEMODE:SaveAllPlayers()  end, true )
+				mmGlobals.roundEntity:ChangeRound(true)
 			end
 			
 		end

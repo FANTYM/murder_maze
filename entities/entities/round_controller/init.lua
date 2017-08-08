@@ -131,7 +131,7 @@ function ENT:Think()
 	
 	local changeRound = false
 	
-	GAMEMODE.roundEnt = self
+	--mmGlobals.roundEntity = self
 	
 	if self.currentRound.lenFunc then
 		if self.currentRound.lenFunc() then

@@ -5,17 +5,19 @@ GM.Website 	= ""
 
 DEFINE_BASECLASS( "gamemode_base")
 
-countDownSounds = {}
-countDownSounds[0] = "npc/overwatch/radiovoice/zero.wav"
-countDownSounds[1] = "npc/overwatch/radiovoice/one.wav"
-countDownSounds[2] = "npc/overwatch/radiovoice/two.wav"
-countDownSounds[3] = "npc/overwatch/radiovoice/three.wav"
-countDownSounds[4] = "npc/overwatch/radiovoice/four.wav"
-countDownSounds[5] = "npc/overwatch/radiovoice/five.wav"
-countDownSounds[6] = "npc/overwatch/radiovoice/six.wav"
-countDownSounds[7] = "npc/overwatch/radiovoice/seven.wav"
-countDownSounds[8] = "npc/overwatch/radiovoice/eight.wav"
-countDownSounds[9] = "npc/overwatch/radiovoice/nine.wav"
+
+
+mmGlobals.countDownSounds = {}
+mmGlobals.countDownSounds[0] = "npc/overwatch/radiovoice/zero.wav"
+mmGlobals.countDownSounds[1] = "npc/overwatch/radiovoice/one.wav"
+mmGlobals.countDownSounds[2] = "npc/overwatch/radiovoice/two.wav"
+mmGlobals.countDownSounds[3] = "npc/overwatch/radiovoice/three.wav"
+mmGlobals.countDownSounds[4] = "npc/overwatch/radiovoice/four.wav"
+mmGlobals.countDownSounds[5] = "npc/overwatch/radiovoice/five.wav"
+mmGlobals.countDownSounds[6] = "npc/overwatch/radiovoice/six.wav"
+mmGlobals.countDownSounds[7] = "npc/overwatch/radiovoice/seven.wav"
+mmGlobals.countDownSounds[8] = "npc/overwatch/radiovoice/eight.wav"
+mmGlobals.countDownSounds[9] = "npc/overwatch/radiovoice/nine.wav"
 
 -- npc/overwatch/radiovoice/citizen.wav
 -- npc/overwatch/radiovoice/quick.wav
@@ -25,17 +27,16 @@ countDownSounds[9] = "npc/overwatch/radiovoice/nine.wav"
 -- npc/overwatch/radiovoice/victor.wav
 -- npc/overwatch/radiovoice/zone.wav
 
+mmGlobals.items = mmGlobals.items or include("items.lua")
 
-items = include("items.lua")
-
-females  =  { "models/player/group01/female_01.mdl", 
+mmGlobals.females  =  { "models/player/group01/female_01.mdl", 
 			  "models/player/group01/female_02.mdl",
 			  "models/player/group01/female_03.mdl",
 			  "models/player/group01/female_04.mdl",
 			  "models/player/group01/female_05.mdl",
 			  "models/player/group01/female_06.mdl" }
 	
-males   =  {  "models/player/group01/male_01.mdl", 
+mmGlobals.males   =  {  "models/player/group01/male_01.mdl", 
 			  "models/player/group01/male_02.mdl",
 			  "models/player/group01/male_03.mdl",
 			  "models/player/group01/male_04.mdl",
@@ -45,30 +46,25 @@ males   =  {  "models/player/group01/male_01.mdl",
 			  "models/player/group01/male_08.mdl",
 			  "models/player/group01/male_09.mdl" }
 			  
-blockSizes = Vector(528, -528, 216)
+mmGlobals.blockSizes = Vector(528, -528, 216)
 
-maxX = 6
-minY = 3
+mmGlobals.mazeMaxSize = Vector(6,6,0)
+mmGlobals.mazeMinSize = Vector(3,3,0)
+mmGlobals.mazeCurSize = Vector(0,0,0)
 
-maxY = 6
-minX = 3
-
-curX = 0
-curY = 0
-
-dirPairs = {}
-	dirPairs["d"] = "u"
-	dirPairs["u"] = "d"
-	dirPairs["e"] = "w"
-	dirPairs["w"] = "e"
-	dirPairs["n"] = "s"
-	dirPairs["s"] = "n"
+mmGlobals.dirPairs = {}
+mmGlobals.dirPairs["d"] = "u"
+mmGlobals.dirPairs["u"] = "d"
+mmGlobals.dirPairs["e"] = "w"
+mmGlobals.dirPairs["w"] = "e"
+mmGlobals.dirPairs["n"] = "s"
+mmGlobals.dirPairs["s"] = "n"
 	
-GM.curMaze = {}
+mmGlobals.curMaze = mmGlobals.curMaze or {}
 	
 function GM:PlayerNoClip( pl, on )
 	
-	return !pl:IsBot() || pl:IsAdmin()
+	return false --!pl:IsBot() || pl:IsAdmin()
 	
 end
 
@@ -123,31 +119,31 @@ function makeValueSmoother(startVal, endVal, arriveTime, smoothFunc)
 
 end
 
-function GetPlayerMapPos(ply)
+function getMapPos( pos )
 	
 	
-	plyPos = ply:GetPos() + Vector(0,0,64)
+	--plyPos = ply:GetPos() + Vector(0,0,64)
 	
-	local result = Vector( math.floor((plyPos.x / blockSizes.x) + 15), 
-						   math.floor((plyPos.y / blockSizes.y) + 15), 
-						   math.abs(math.floor( plyPos.z / blockSizes.z)) )
+	local result = Vector( math.floor((pos.x / mmGlobals.blockSizes.x) + 15), 
+						   math.floor((pos.y / mmGlobals.blockSizes.y) + 15), 
+						   math.abs(math.floor( pos.z / mmGlobals.blockSizes.z)) )
 		
 	return result
 						   
 end
 
-function GetBlockWorldPos( pos )
+function getWorldPos( pos )
 			
-	return Vector( (pos.x - 15) * blockSizes.x,
-				   (pos.y - 15) * blockSizes.y,
-				   (pos.z) * blockSizes.z )
+	return Vector( (pos.x - 15) * mmGlobals.blockSizes.x,
+				   (pos.y - 15) * mmGlobals.blockSizes.y,
+				   (pos.z) * mmGlobals.blockSizes.z )
 		   
 end
 
 function IsInMaze( pos )
 	
-	if ( pos.x >= 0 && pos.x < curX ) &&
-	   ( pos.y >= 0 && pos.y < curY ) &&
+	if ( pos.x >= 0 && pos.x < mmGlobals.mazeCurSize.x ) &&
+	   ( pos.y >= 0 && pos.y < mmGlobals.mazeCurSize.y ) &&
 	   ( pos.z >= 0 && pos.z <= 1 ) then
 	   
 	   return true
@@ -179,10 +175,9 @@ end
 
 function GM:StartCommand(ply, cmd)
 	
-	if !self.roundEnt then return end
+	if !mmGlobals.roundEntity then return end
 	
-	if ply.inMaze && self.roundEnt:GetCurrentTitle() == "pre" ||
-	   ply.snared then
+	if ply.inMaze && mmGlobals.roundEntity:GetCurrentTitle() == "pre" then
 		
 		cmd:SetMouseX(0)
 		cmd:SetMouseY(0)		
@@ -220,11 +215,11 @@ function GM:drawMapToString(level, ply, mazeData)
 	local x = 0
 	local y = 0
 	
-	mazeData = mazeData or self.curMaze
+	mazeData = mazeData or mmGlobals.curMaze
 	
 	local plyPos = Vector(0,0,0)
 	if ply && IsValid(ply) && ply:IsPlayer() then
-		plyPos = GetPlayerMapPos(ply)
+		plyPos = getMapPos(ply:GetPos() + Vector(0,0,64))
 	end
 	
 	local scanStage = -1
@@ -235,11 +230,11 @@ function GM:drawMapToString(level, ply, mazeData)
 		z = 1
 	end
 	
-	for y = 0, curY - 1 do
+	for y = 0, mmGlobals.mazeCurSize.y - 1 do
 		
 		while scanStage <= 2 do
 			
-			for x = -1, curX - 2 do
+			for x = -1, mmGlobals.mazeCurSize.x - 2 do
 				
 				if !mazeData then
 					mazeData = {}

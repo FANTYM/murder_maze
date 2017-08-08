@@ -8,8 +8,8 @@ end
 
 function ENT:Think()
 
-	if !GAMEMODE.roundEnt then
-		GAMEMODE.roundEnt = self
+	if !mmGlobals.roundEntity then
+		mmGlobals.roundEntity = self
 		
 		self:NextThink(CurTime() + 0.25)
 	else

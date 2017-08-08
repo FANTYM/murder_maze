@@ -6,7 +6,9 @@ include( "shared.lua" )
 function ENT:Initialize()
 
 	self:SetModel("models/mm/laser_trap.mdl")
-	self:PhysicsInitStatic(SOLID_VPHYSICS)
+	--self:PhysicsInitStatic(SOLID_VPHYSICS)
+	self:PhysicsInit(SOLID_VPHYSICS)
+	self:PhysicsInitShadow(false, false)
 	self:SetMoveType(MOVETYPE_NONE)
 	
 	self.shootAng = math.floor(math.random() * 360)
@@ -25,7 +27,7 @@ function ENT:Deploy(depSpot)
 	
 	local traceData = {}
 		  traceData.start = depSpot
-		  traceData.endpos = traceData.start + Vector(0,0,blockSizes.z)
+		  traceData.endpos = traceData.start + Vector(0,0,mmGlobals.blockSizes.z)
 		  traceData.filter = {self}
 		  
 	local traceRes = util.TraceLine(traceData)
@@ -56,7 +58,7 @@ function ENT:Think()
 	self.lastThink = CurTime()
 		
 		
-	if GAMEMODE.roundEnt:GetCurrentTitle() != "in" then return end
+	if mmGlobals.roundEntity && mmGlobals.roundEntity:GetCurrentTitle() != "in" then return end
 	
 	self.shootAng = Lerp(self.thinkDelta, self.shootAng, self.shootAng + self.laserRate) --((self.shootAng + (self.laserRate * self.thinkDelta)) % 360)
 	
@@ -64,8 +66,8 @@ function ENT:Think()
 	
 	local traceData = {}
 		  traceData.start = self:GetPos()
-		  traceData.endpos = traceData.start + Vector( math.sin(math.rad(self.shootAng)) * (blockSizes.x) * 2, 
-													   math.cos(math.rad(self.shootAng)) * (blockSizes.y) * 2,
+		  traceData.endpos = traceData.start + Vector( math.sin(math.rad(self.shootAng)) * (mmGlobals.blockSizes.x) * 2, 
+													   math.cos(math.rad(self.shootAng)) * (mmGlobals.blockSizes.y) * 2,
 													   math.sin(math.rad(self.shootAng)) * 15 )
 		  traceData.filter = {self}
 		  

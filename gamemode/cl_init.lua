@@ -1,90 +1,95 @@
+
+mmGlobals = {}
+
 include( 'shared.lua' )
 
 DEFINE_BASECLASS( "gamemode_base")
 
-inMaze = false
-in_render = false
-storeIsOpen = false
-playerIsOpen = false 
-updateMiniMap = true
+-- Variable for if this player is in the maze
+mmGlobals.inMaze = mmGlobals.inMaze or false
 
-mapSize = Vector(0,0,0)
-mazeZero = Vector(0,0,0)
-lastPlyMapPos = Vector(0,0,0)
-compassAngle = makeValueSmoother(0, 0, 0.25)
+-- Variables for maze placement and rendering
+mmGlobals.worldSize = mmGlobals.worldSize or Vector(0,0,0)
+mmGlobals.mazeZero = mmGlobals.mazeZero or Vector(0,0,0)
 
-lastHD = CurTime()
+mmGlobals.in_render = mmGlobals.in_render or false
 
-exitCamPos = nil
-exitEnt = nil
+-- Variables for the exit portal cam
+mmGlobals.exitCamPos = mmGlobals.exitCamPos
+mmGlobals.exitDoorEntity = mmGlobals.exitDoorEntity
 
-hudRTSize = 512
-hudRTName = "mini_map_hud_texture" .. tostring(CurTime())
+-- Variables for the HUD map render target
+mmGlobals.hudRTSize = 512
+mmGlobals.hudRTName = mmGlobals.hudRTName or ("mini_map_hud_texture" .. tostring(SysTime()))
 
-canNextSound = CurTime()
-lastNum = -1
-storeMenu = nil
-playerMenu = nil
-scoreMenu = nil
+mmGlobals.lastPlyMapPos = mmGlobals.lastPlyMapPos or Vector(0,0,0)
+mmGlobals.updateMiniMap = mmGlobals.updateMiniMap or true
 
-hudQueue = {}
-drawBoxes = {}
-scores = {}
+-- Variables for the end of round countdown
+mmGlobals.canNextSound = mmGlobals.canNextSound or CurTime()
+mmGlobals.lastNum = mmGlobals.lastNum or -1
 
-compassBack = Material("/mm/compass_back.vmt")
-compassPointer = Material("/mm/compass_pointer.vmt")
-miniMapHudParts = {}
-miniMapHudParts.bg 		= Material("/mm/hud_map_basic.vmt")
-miniMapHudParts.ud  	= Material("/mm/hud_map_stairs.vmt")
-miniMapHudParts.n  		= Material("/mm/hud_map_door_n.vmt")
-miniMapHudParts.s  		= Material("/mm/hud_map_door_s.vmt")
-miniMapHudParts.e  		= Material("/mm/hud_map_door_e.vmt")
-miniMapHudParts.w  		= Material("/mm/hud_map_door_w.vmt")
-miniMapHudParts.ply  	= Material("/mm/hud_map_player.vmt")
+-- Variables for client menus
+mmGlobals.storeMenu = mmGlobals.storeMenu
+mmGlobals.playerMenu = mmGlobals.playerMenu
+mmGlobals.scoreMenu = mmGlobals.scoreMenu
+mmGlobals.storeIsOpen = !(mmGlobals.storeMenu == nil)
+mmGlobals.playerIsOpen = !(mmGlobals.playerIsOpen == nil)
+mmGlobals.scores = mmGlobals.scores or {}
 
-aspectH = (ScrW() / ScrH())
-aspectV = (ScrH() / ScrW())
-if aspectH > aspectV then 
-	aspectH = 1
+-- Variable for text displayed on screen
+mmGlobals.hudQueue = mmGlobals.hudQueue or {}
+
+-- Variable for holding debug boxes
+mmGlobals.drawBoxes = mmGlobals.drawBoxes or {}
+
+-- Variables for HUD map and compass
+mmGlobals.miniMapHudParts = {}
+mmGlobals.miniMapHudParts.bg 	= Material("/mm/hud_map_basic.vmt")
+mmGlobals.miniMapHudParts.ud  	= Material("/mm/hud_map_stairs.vmt")
+mmGlobals.miniMapHudParts.n  	= Material("/mm/hud_map_door_n.vmt")
+mmGlobals.miniMapHudParts.s  	= Material("/mm/hud_map_door_s.vmt")
+mmGlobals.miniMapHudParts.e  	= Material("/mm/hud_map_door_e.vmt")
+mmGlobals.miniMapHudParts.w  	= Material("/mm/hud_map_door_w.vmt")
+mmGlobals.miniMapHudParts.ply  	= Material("/mm/hud_map_player.vmt")
+mmGlobals.compassAngle = mmGlobals.compassAngle or makeValueSmoother(0, 0, 0.25)
+mmGlobals.compassBack = Material("/mm/compass_back.vmt")
+mmGlobals.compassPointer = Material("/mm/compass_pointer.vmt")
+
+mmGlobals.aspectH = (ScrW() / ScrH())
+mmGlobals.aspectV = (ScrH() / ScrW())
+if mmGlobals.aspectH > mmGlobals.aspectV then 
+	mmGlobals.aspectH = 1
 else 
-	aspectV = 1
+	mmGlobals.aspectV = 1
 end
 
-camTex = GetRenderTargetEx("exit_texture",
-        ScrW(),
-        ScrH(),
-        RT_SIZE_FULL_FRAME_BUFFER,
-        MATERIAL_RT_DEPTH_SEPARATE,
-        8800,
-        CREATERENDERTARGETFLAGS_UNFILTERABLE_OK,
-		IMAGE_FORMAT_RGB888
-	)
+mmGlobals.camTex = GetRenderTargetEx( "exit_texture",
+									  ScrW(),
+									  ScrH(),
+									  RT_SIZE_FULL_FRAME_BUFFER,
+									  MATERIAL_RT_DEPTH_SEPARATE,
+									  8800,
+									  CREATERENDERTARGETFLAGS_UNFILTERABLE_OK,
+									  IMAGE_FORMAT_RGB888 )
 	
-exitMat = CreateMaterial("exit_material", "UnlitGeneric", {
-		["$selfillum"] = 1,
-		["$basetexture"] = "exit_texture"
-})
+mmGlobals.exitMat = CreateMaterial( "exit_material", 
+									"UnlitGeneric", { ["$selfillum"] 	= 1,
+													  ["$basetexture"] 	= "exit_texture" } )
 
+mmGlobals.miniMapHudTexture = GetRenderTargetEx( mmGlobals.hudRTName,
+												 mmGlobals.hudRTSize,
+												 mmGlobals.hudRTSize,
+												 RT_SIZE_OFFSCREEN,
+												 MATERIAL_RT_DEPTH_NONE,
+												 0,
+												 CREATERENDERTARGETFLAGS_UNFILTERABLE_OK,
+												 IMAGE_FORMAT_RGBA8888 )
 
-
-miniMapHudTexture = GetRenderTargetEx( hudRTName,
-										hudRTSize,
-										hudRTSize,
-										RT_SIZE_OFFSCREEN,
-										MATERIAL_RT_DEPTH_NONE,
-										0,
-										CREATERENDERTARGETFLAGS_UNFILTERABLE_OK,
-										IMAGE_FORMAT_RGBA8888
-									 )
-
-miniMapMat = CreateMaterial("mmmm_hud_material", "UnlitGeneric", 
-							{ 
-								["$selfillum"] = 1,
-								["$basetexture"] = hudRTName,
-								["$translucent"] = 1
-							})
-
-
+mmGlobals.miniMapMat = CreateMaterial( "mmmm_hud_material", 
+									   "UnlitGeneric", { ["$selfillum"] 	= 1,
+														 ["$basetexture"] 	= mmGlobals.hudRTName,
+														 ["$translucent"] 	= 1 } )
 
 net.Receive("rec_scores", function (len, ply) 
 	
@@ -95,7 +100,7 @@ net.Receive("rec_scores", function (len, ply)
 			  newScore.nick = net.ReadString()
 			  newScore.mazeStats = net.ReadVector()  
 			  newScore.credits = net.ReadInt(32)
-		table.insert(scores, newScore)
+		table.insert(mmGlobals.scores, newScore)
 	end
 	
 end)
@@ -114,21 +119,21 @@ net.Receive( "rec_room_from_server", function(len, ply)
 									recCell.w = net.ReadBool()
 									recCell.visited = true
 									
-									if !GAMEMODE.curMaze then
-										GAMEMODE.curMaze = {}
+									if !mmGlobals.curMaze then
+										mmGlobals.curMaze = {}
 									end
 									
-									if !GAMEMODE.curMaze[roomPos.z] then
-										GAMEMODE.curMaze[roomPos.z] = {}
+									if !mmGlobals.curMaze[roomPos.z] then
+										mmGlobals.curMaze[roomPos.z] = {}
 									end
 									
-									if !GAMEMODE.curMaze[roomPos.z][roomPos.x]  then
-										GAMEMODE.curMaze[roomPos.z][roomPos.x] = {}
+									if !mmGlobals.curMaze[roomPos.z][roomPos.x]  then
+										mmGlobals.curMaze[roomPos.z][roomPos.x] = {}
 									end
 									
-									GAMEMODE.curMaze[roomPos.z][roomPos.x][roomPos.y] = recCell
+									mmGlobals.curMaze[roomPos.z][roomPos.x][roomPos.y] = recCell
 									
-									updateMiniMap = true
+									mmGlobals.updateMiniMap = true
 									
 								end )
 								
@@ -143,7 +148,7 @@ net.Receive( "add_draw_box", function(len, ply)
 									
 									newBox.ttl = net.ReadFloat()
 									
-									table.insert(drawBoxes, newBox)
+									table.insert(mmGlobals.drawBoxes, newBox)
 										
 								end )
 								
@@ -161,37 +166,37 @@ net.Receive( "hud_message", function(len, ply)
 										  msg.message = message
 										  msg.ttl = ttl
 										  
-									table.insert(hudQueue, msg)
+									table.insert(mmGlobals.hudQueue, msg)
 										
 								end )
 								
 net.Receive( "update_maze_size", function(len, ply)
 									
-									curX = net.ReadInt(32)
-									curY = net.ReadInt(32)
+									mmGlobals.mazeCurSize.x = net.ReadInt(32)
+									mmGlobals.mazeCurSize.y = net.ReadInt(32)
 																		
 								end )
 								
 net.Receive( "world_size", function(len, ply)
 									
-									mapSize = net.ReadVector()
+									mmGlobals.worldSize = net.ReadVector()
 									
 								end )
 								
 net.Receive( "maze_zero", function(len, ply)
 
-									mazeZero = net.ReadVector()
+									mmGlobals.mazeZero = net.ReadVector()
 									
 								end )
 								
 net.Receive( "in_maze", function(len, ply)
 
-									inMaze = net.ReadBool()
+									mmGlobals.inMaze = net.ReadBool()
 									
 								end )
 								
 net.Receive( "get_exit_cam", function(len, ply)
-									exitCamPos = net.ReadVector()
+									mmGlobals.exitCamPos = net.ReadVector()
 								end )
 								
 net.Receive( "credit_info", function(len, ply)
@@ -216,14 +221,14 @@ function GM:RenderMapToRT(level)
 	local x = 0
 	local y = 0
 	
-	local plyPos = GetPlayerMapPos(ply)
+	local plyPos = getMapPos(ply:GetPos() + Vector(0,0,64))
 	
 	if level == "b" then
 		z = 1
 	end
 	
-	local blockSizeX = math.floor(miniMapHudTexture:Width() / curX)
-	local blockSizeY = math.floor(miniMapHudTexture:Height() / curY)
+	local blockSizeX = math.floor(mmGlobals.miniMapHudTexture:Width() / mmGlobals.mazeCurSize.x)
+	local blockSizeY = math.floor(mmGlobals.miniMapHudTexture:Height() / mmGlobals.mazeCurSize.y)
 	
 	if blockSizeX > blockSizeY then
 		blockSizeX = blockSizeY 
@@ -233,67 +238,67 @@ function GM:RenderMapToRT(level)
 		
 	local render_target = render.GetRenderTarget()
 
-	render.SetRenderTarget(miniMapHudTexture)
+	render.SetRenderTarget(mmGlobals.miniMapHudTexture)
 	render.OverrideAlphaWriteEnable(true, true)
 	
 	cam.Start2D()
 	
-		render.ClearRenderTarget(miniMapHudTexture, Color(0,0,0,0))
+		render.ClearRenderTarget(mmGlobals.miniMapHudTexture, Color(0,0,0,0))
 		
-		render.SetViewPort(0,0, hudRTSize, hudRTSize)
+		render.SetViewPort(0,0, mmGlobals.hudRTSize, mmGlobals.hudRTSize)
 		
-		for y = 0, curY - 1 do
+		for y = 0, mmGlobals.mazeCurSize.y - 1 do
 			
-			for x = 0, curX - 1 do
+			for x = 0, mmGlobals.mazeCurSize.x - 1 do
 				
-				if !self.curMaze then
-					self.curMaze = {}
+				if !mmGlobals.curMaze then
+					mmGlobals.curMaze = {}
 				end
 				
-				if !self.curMaze[z] then
-					self.curMaze[z] = {}
+				if !mmGlobals.curMaze[z] then
+					mmGlobals.curMaze[z] = {}
 				end
 				
-				if !self.curMaze[z][x]  then
-					self.curMaze[z][x] = {}
+				if !mmGlobals.curMaze[z][x]  then
+					mmGlobals.curMaze[z][x] = {}
 				end
 				
-				if !self.curMaze[z][x][y]  then
-					self.curMaze[z][x][y] = newMazeCell()
+				if !mmGlobals.curMaze[z][x][y]  then
+					mmGlobals.curMaze[z][x][y] = newMazeCell()
 				end
 				
-				local curBlock = self.curMaze[z][x][y]
+				local curBlock = mmGlobals.curMaze[z][x][y]
 				
 				if curBlock.visited then
 					
 					surface.SetDrawColor(0,0,0,128)
 		
-					surface.SetMaterial(miniMapHudParts.bg)
+					surface.SetMaterial(mmGlobals.miniMapHudParts.bg)
 					
 					surface.DrawTexturedRect( x * blockSizeX, y * blockSizeY, blockSizeX , blockSizeY )
 					
 					if curBlock.u || curBlock.d then
-						surface.SetMaterial(miniMapHudParts.ud)
+						surface.SetMaterial(mmGlobals.miniMapHudParts.ud)
 						surface.DrawTexturedRect( x * blockSizeX, y * blockSizeY, blockSizeX , blockSizeY )
 					end
 					
 					if !curBlock.n then
-						surface.SetMaterial(miniMapHudParts.n)
+						surface.SetMaterial(mmGlobals.miniMapHudParts.n)
 						surface.DrawTexturedRect( x * blockSizeX, y * blockSizeY, blockSizeX , blockSizeY )
 					end
 					
 					if !curBlock.s then
-						surface.SetMaterial(miniMapHudParts.s)
+						surface.SetMaterial(mmGlobals.miniMapHudParts.s)
 						surface.DrawTexturedRect( x * blockSizeX, y * blockSizeY, blockSizeX , blockSizeY )
 					end
 					
 					if !curBlock.e then
-						surface.SetMaterial(miniMapHudParts.e)
+						surface.SetMaterial(mmGlobals.miniMapHudParts.e)
 						surface.DrawTexturedRect( x * blockSizeX, y * blockSizeY, blockSizeX , blockSizeY )
 					end
 					
 					if !curBlock.w then
-						surface.SetMaterial(miniMapHudParts.w)
+						surface.SetMaterial(mmGlobals.miniMapHudParts.w)
 						surface.DrawTexturedRect( x * blockSizeX, y * blockSizeY, blockSizeX , blockSizeY )
 					end
 					
@@ -301,7 +306,7 @@ function GM:RenderMapToRT(level)
 						local plyColor = LocalPlayer():GetPlayerColor()
 						
 						surface.SetDrawColor(255 * plyColor.r, 255 * plyColor.g, 255 * plyColor.b,32)	
-						surface.SetMaterial(miniMapHudParts.ply)
+						surface.SetMaterial(mmGlobals.miniMapHudParts.ply)
 						surface.DrawTexturedRect( x * blockSizeX, y * blockSizeY, blockSizeX , blockSizeY )
 						
 					end
@@ -315,7 +320,7 @@ function GM:RenderMapToRT(level)
 	render.SetRenderTarget(render_target)
 	render.SetViewPort(0,0,ScrW(), ScrH())
 	render.OverrideAlphaWriteEnable(false)
-	miniMapMat:SetTexture("$basetexture", miniMapHudTexture)
+	mmGlobals.miniMapMat:SetTexture("$basetexture", mmGlobals.miniMapHudTexture)
 		
 end
 
@@ -331,46 +336,43 @@ function GM:HUDPaint()
 	
 	
 	BaseClass.HUDPaint(self)
-	
-	local hDelta = CurTime() - lastHD
-	lastHD = CurTime()
-	
+
 	surface.SetDrawColor(0,0,0,255)
 	
-	draw.DrawText( "Time: " .. self.roundEnt:GetFormattedTime(), "DermaLarge", ScrW() * 0.5, 0, Color( 255, 255, 255, 255 ), TEXT_ALIGN_CENTER )
+	draw.DrawText( "Time: " .. mmGlobals.roundEntity:GetFormattedTime(), "DermaLarge", ScrW() * 0.5, 0, Color( 255, 255, 255, 255 ), TEXT_ALIGN_CENTER )
 	if credits then
 		draw.DrawText( "Credits: " .. tostring(math.ceil(credits:GetValue())), "DermaLarge", ScrW(), 0, Color( 255, 255, 255, 255 ), TEXT_ALIGN_RIGHT )
 	end
 	
 	surface.SetDrawColor(0,0,0,32)	
 	
-	surface.SetMaterial(miniMapMat)
-	surface.DrawTexturedRect(8, 144, hudRTSize * aspectH, hudRTSize * aspectV)
+	surface.SetMaterial(mmGlobals.miniMapMat)
+	surface.DrawTexturedRect(8, 144, mmGlobals.hudRTSize * mmGlobals.aspectH, mmGlobals.hudRTSize * mmGlobals.aspectV)
 	
 	surface.SetDrawColor(0,0,0,255)	
 		
-	if #hudQueue > 0 then
+	if #mmGlobals.hudQueue > 0 then
 		
-		if !hudQueue[1].ttd then
-			hudQueue[1].ttd = CurTime() + hudQueue[1].ttl -- (hudQueue[1].ttl / #hudQueue)
+		if !mmGlobals.hudQueue[1].ttd then
+			mmGlobals.hudQueue[1].ttd = CurTime() + mmGlobals.hudQueue[1].ttl
 		end
 		
-		draw.DrawText( hudQueue[1].message, "DermaLarge", ScrW() * 0.5, ScrH() * 0.2, Color( 255, 255, 255, 255 ), TEXT_ALIGN_CENTER )
+		draw.DrawText( mmGlobals.hudQueue[1].message, "DermaLarge", ScrW() * 0.5, ScrH() * 0.2, Color( 255, 255, 255, 255 ), TEXT_ALIGN_CENTER )
 		
-		if CurTime() > hudQueue[1].ttd ||
-		   #hudQueue > 1 then
+		if CurTime() > mmGlobals.hudQueue[1].ttd ||
+		   #mmGlobals.hudQueue > 1 then
 			
-			table.remove(hudQueue, 1)
+			table.remove(mmGlobals.hudQueue, 1)
 		
 		end
 		
 	end	
 	
-	surface.SetMaterial(compassBack)
+	surface.SetMaterial(mmGlobals.compassBack)
 	surface.DrawTexturedRect(8, 8, 128,128)
 	
-	surface.SetMaterial(compassPointer)
-	surface.DrawTexturedRectRotated(72, 72, 128,128, compassAngle:GetValue())
+	surface.SetMaterial(mmGlobals.compassPointer)
+	surface.DrawTexturedRectRotated(72, 72, 128,128, mmGlobals.compassAngle:GetValue())
 	
 	return true 
 	
@@ -378,11 +380,11 @@ end
 
 function CleanUpMaze()
 	
-	if GAMEMODE.roundEnt then
+	if mmGlobals.roundEntity then
 		
-		if !inMaze && (GAMEMODE.roundEnt:GetCurrentTitle() != "pre" && 
-					   GAMEMODE.roundEnt:GetCurrentTitle() != "in" && 
-					   GAMEMODE.roundEnt:GetCurrentTitle() != "ending") then
+		if !mmGlobals.inMaze && (mmGlobals.roundEntity:GetCurrentTitle() != "pre" && 
+					   mmGlobals.roundEntity:GetCurrentTitle() != "in" && 
+					   mmGlobals.roundEntity:GetCurrentTitle() != "ending") then
 		
 			local csEnts = ents.FindByClass("class C_BaseFlex")
 			
@@ -394,12 +396,12 @@ function CleanUpMaze()
 			
 			end
 			
-			curX = 0
-			curY = 0
+			mmGlobals.mazeCurSize.x = 0
+			mmGlobals.mazeCurSize.y = 0
 			
-			GAMEMODE.curMaze = {}
+			mmGlobals.curMaze = {}
 			
-			updateMiniMap = true
+			mmGlobals.updateMiniMap = true
 			
 		end
 	end
@@ -413,83 +415,84 @@ function GM:Think()
 	BaseClass.Think(self)
 	
 	local playerYaw = LocalPlayer():GetAngles().y - 90
-	local angleDelta = compassAngle.eVal - playerYaw
+	local angleDelta = mmGlobals.compassAngle.eVal - playerYaw
 	
-	if self.roundEnt:GetTimeLeft() < 10 && (self.roundEnt:GetCurrentTitle() == "in" || self.roundEnt:GetCurrentTitle() == "ending") then
+	if mmGlobals.roundEntity:GetTimeLeft() < 10 && (mmGlobals.roundEntity:GetCurrentTitle() == "in" || mmGlobals.roundEntity:GetCurrentTitle() == "ending") then
 		
-		local curNum = math.ceil(self.roundEnt:GetTimeLeft() - 0.5)
+		local curNum = math.ceil(mmGlobals.roundEntity:GetTimeLeft() - 0.5)
 		
-		if (CurTime() > canNextSound) && curNum != lastNum then
+		if (CurTime() > mmGlobals.canNextSound) && curNum != mmGlobals.lastNum then
 			
-			surface.PlaySound(countDownSounds[curNum])
+			surface.PlaySound(mmGlobals.countDownSounds[curNum])
 			
-			canNextSound = CurTime() + SoundDuration(countDownSounds[curNum])
+			mmGlobals.canNextSound = CurTime() + SoundDuration(mmGlobals.countDownSounds[curNum])
 			
-			lastNum = curNum
+			mmGlobals.lastNum = curNum
 			
 		end
 	
 	end
 	
 	if angleDelta < -359 then
-		compassAngle.sVal = playerYaw
-		compassAngle.eVal = -compassAngle:GetValue()
+		mmGlobals.compassAngle.sVal = playerYaw
+		mmGlobals.compassAngle.eVal = -mmGlobals.compassAngle:GetValue()
 		
 	elseif angleDelta > 359 then
-		compassAngle.sVal = playerYaw
-		compassAngle.eVal = -compassAngle:GetValue()
+		mmGlobals.compassAngle.sVal = playerYaw
+		mmGlobals.compassAngle.eVal = -mmGlobals.compassAngle:GetValue()
 	else
-		compassAngle.sVal = compassAngle:GetValue()
-		compassAngle.eVal = playerYaw
+		mmGlobals.compassAngle.sVal = mmGlobals.compassAngle:GetValue()
+		mmGlobals.compassAngle.eVal = playerYaw
 	end
 	
-	compassAngle.aTime = (1 / math.abs(compassAngle.sVal - compassAngle.eVal)) * 2
+	mmGlobals.compassAngle.aTime = (1 / math.abs(mmGlobals.compassAngle.sVal - mmGlobals.compassAngle.eVal)) * 2
 	
-	compassAngle.startTime = CurTime() 
+	mmGlobals.compassAngle.startTime = CurTime() 
 	if !credits then
 		net.Start("request_credit_info")
 		net.SendToServer()
 	end
 	
-	if mapSize == Vector(0,0,0) then
+	if mmGlobals.worldSize == Vector(0,0,0) then
 	
 		net.Start("req_world_size")
 		net.SendToServer()
 		
 	end
 	
-	if mazeZero == Vector(0,0,0) then
+	if (mmGlobals.mazeZero == nil) || (mmGlobals.mazeZero == Vector(0,0,0)) then
 		
 		net.Start("req_maze_zero")
 		net.SendToServer()
 	
 	end
 	
-	if curX == 0 || curY == 0 then
+	if mmGlobals.mazeCurSize.x == 0 || mmGlobals.mazeCurSize.y == 0 then
 		
 		net.Start("req_maze_size")
 		net.SendToServer()
 		
 	end
 	
-	local curPlyMapPos = GetPlayerMapPos(LocalPlayer())
+	local curPlyMapPos = getMapPos(LocalPlayer():GetPos() + Vector(0,0,64))
 	
-	if  curPlyMapPos != lastPlyMapPos then
+	if  curPlyMapPos != mmGlobals.lastPlyMapPos then
 		net.Start("req_room_from_server")
 			net.WriteVector(curPlyMapPos)
 		net.SendToServer()
-		lastPlyMapPos = curPlyMapPos
+		mmGlobals.lastPlyMapPos = curPlyMapPos
 		
 	end
 end
 		
 
-hook.Add( "RenderScene", "renderScene_m", function( ViewOrigin, ViewAngles, ViewFOV )
+--hook.Add( "RenderScene", "renderScene_m", function( ViewOrigin, ViewAngles, ViewFOV )
+function GM:RenderScene(ViewOrigin, ViewAngles, ViewFOV )
 	
 	renderScene( ViewOrigin, ViewAngles )
 	
-	if updateMiniMap then
-		local plyMapPos = GetPlayerMapPos(LocalPlayer())
+	if mmGlobals.updateMiniMap then
+		local plyMapPos = getMapPos(LocalPlayer():GetPos() + Vector(0,0,64))
 		local levelChar = "t"
 		
 		if plyMapPos.z == 1 then
@@ -497,21 +500,20 @@ hook.Add( "RenderScene", "renderScene_m", function( ViewOrigin, ViewAngles, View
 		end
 		
 		GAMEMODE.miniMapSize = GAMEMODE:RenderMapToRT(levelChar)
-		updateMiniMap = false
+		mmGlobals.updateMiniMap = false
 		
 	end 
 
 
-end )
+end --)
 
 function renderScene(origin, angles)
 	
-	if in_render then return end
+	if mmGlobals.in_render then return end
 	
-	if (!exitCamPos || !exitEnt) ||
-	   (!IsValid(exitEnt)) then 
+	if !mmGlobals.exitCamPos || (!IsValid(mmGlobals.exitDoorEntity)) then 
 	
-	   if !exitCamPos then
+	   if !mmGlobals.exitCamPos then
 			net.Start("request_exit_cam")
 			net.SendToServer()
 	   end
@@ -519,14 +521,14 @@ function renderScene(origin, angles)
 	   return
 	end
 	
-	in_render = true
-	local doorNormal = -exitEnt:GetForward()
+	mmGlobals.in_render = true
+	local doorNormal = -mmGlobals.exitDoorEntity:GetForward()
 
-	local doorDist = doorNormal:Dot(exitCamPos)
+	local doorDist = doorNormal:Dot(mmGlobals.exitCamPos)
 
-	local exitNormal = exitCamPos:Angle():Forward()
+	local exitNormal = mmGlobals.exitCamPos:Angle():Forward()
 
-	local exitDist = exitNormal:Dot(exitEnt:GetPos())
+	local exitDist = exitNormal:Dot(mmGlobals.exitDoorEntity:GetPos())
 			
 	local fwd = angles:Forward()
 
@@ -543,8 +545,8 @@ function renderScene(origin, angles)
 
 	angles = up:Cross( fwd ):Angle() + Angle(0,-90,0)
 
-	local lOrigin = exitEnt:WorldToLocal(origin)
-	local lAngles = exitEnt:WorldToLocalAngles( angles )
+	local lOrigin = mmGlobals.exitDoorEntity:WorldToLocal(origin)
+	local lAngles = mmGlobals.exitDoorEntity:WorldToLocalAngles( angles )
 
 	lOrigin.y = -lOrigin.y
 	lAngles.y = -lAngles.y
@@ -557,28 +559,28 @@ function renderScene(origin, angles)
 	view.w = ScrW()
 	view.h = ScrH()
 
-	view.origin = exitCamPos + Vector(0,0,0)
+	view.origin = mmGlobals.exitCamPos + Vector(0,0,0)
 	view.angles = everythingServesTheBeam:LocalToWorldAngles(lAngles) 
 	
 	view.fov = 106
 
 	local render_target = render.GetRenderTarget()
 
-	render.SetRenderTarget(camTex)
+	render.SetRenderTarget(mmGlobals.camTex)
 
-				exitEnt:SetNoDraw(true)
+				mmGlobals.exitDoorEntity:SetNoDraw(true)
 				cam.Start2D()
 					
 					render.RenderView(view)
 					
 				cam.End2D()
-				exitEnt:SetNoDraw(false)
+				mmGlobals.exitDoorEntity:SetNoDraw(false)
 						
 	render.SetRenderTarget(render_target)
 
-	exitMat:SetTexture("$basetexture", camTex)
+	mmGlobals.exitMat:SetTexture("$basetexture", mmGlobals.camTex)
 	
-	in_render = false
+	mmGlobals.in_render = false
 	
 end
 
@@ -586,13 +588,13 @@ local matColor = Material("color")
 
 function GM:PreDrawOpaqueRenderables()
 	
-	if drawBoxes then
-		if #drawBoxes > 0 then
+	if mmGlobals.drawBoxes then
+		if #mmGlobals.drawBoxes > 0 then
 			
-			for i = 1, #drawBoxes do
+			for i = 1, #mmGlobals.drawBoxes do
 				
 				
-				local curBox = drawBoxes[i]
+				local curBox = mmGlobals.drawBoxes[i]
 				
 				if curBox == nil then continue end
 				
@@ -607,7 +609,7 @@ function GM:PreDrawOpaqueRenderables()
 				
 				
 				if CurTime() >= curBox.dieTime then
-					table.remove(drawBoxes, i)
+					table.remove(mmGlobals.drawBoxes, i)
 				end
 				
 			end
@@ -630,7 +632,7 @@ function GM:PostDrawViewModel( viewModel, ply, weapon )
 		
 		local plyBlock = self:GetPlayerBlock()
 		
-		if inMaze && IsValid(plyBlock) then
+		if mmGlobals.inMaze && IsValid(plyBlock) then
 			
 			render.SuppressEngineLighting(true)
 			
@@ -672,11 +674,11 @@ function GM:GetPlayerBlock()
 	
 	local ply = LocalPlayer()
 	
-	local plyMapPos = GetPlayerMapPos(ply)
+	local plyMapPos = getMapPos(ply:GetPos() + Vector(0,0,64))
 	
-	local blockPos = GetBlockWorldPos(plyMapPos) * Vector(1,1,1)
+	local blockPos = getWorldPos(plyMapPos) * Vector(1,1,1)
 	
-	local blockList = ents.FindInBox( blockPos - (blockSizes * 0.5), blockPos + (blockSizes * 0.5) ) 
+	local blockList = ents.FindInBox( blockPos - (mmGlobals.blockSizes * 0.5), blockPos + (mmGlobals.blockSizes * 0.5) ) 
 	local blockEnt = nil
 	local cDist = 640000
 	
@@ -709,23 +711,23 @@ end
 
 function openStore(len, ply)
 	
-	if storeIsOpen then
-		storeMenu:Remove()
+	if mmGlobals.storeIsOpen then
+		mmGlobals.storeMenu:Remove()
 		return
 	end
 	
 	gui.EnableScreenClicker( true )
 	
-	storeIsOpen = true
+	mmGlobals.storeIsOpen = true
 	
-	storeMenu = vgui.Create('DFrame')
-	storeMenu:SetSize(ScrW() * 0.5, ScrH() * 0.5)
-	storeMenu:Center()
-	storeMenu:SetTitle('Murder Maze - Store')
-	storeMenu:SetDeleteOnClose(true)
+	mmGlobals.storeMenu = vgui.Create('DFrame')
+	mmGlobals.storeMenu:SetSize(ScrW() * 0.5, ScrH() * 0.5)
+	mmGlobals.storeMenu:Center()
+	mmGlobals.storeMenu:SetTitle('Murder Maze - Store')
+	mmGlobals.storeMenu:SetDeleteOnClose(true)
 
-	storeMenu.OnRemove = function(self) 
-							storeIsOpen = false
+	mmGlobals.storeMenu.OnRemove = function(self) 
+							mmGlobals.storeIsOpen = false
 							gui.EnableScreenClicker(false) 
 						end
 
@@ -737,7 +739,7 @@ function openStore(len, ply)
 	local colPad = 8
 	local colCount = 0
 	
-	local spawnIconWidth = (storeMenu:GetWide() / maxCols) - rowPad
+	local spawnIconWidth = (mmGlobals.storeMenu:GetWide() / maxCols) - rowPad
 	local spawnIconHeight = spawnIconWidth
 	
 	local lblTemp = vgui.Create("DLabel")
@@ -751,7 +753,7 @@ function openStore(len, ply)
 	local longest = 0
 	local widest = 0
 	
-	for itemNumber, item in pairs(items) do
+	for itemNumber, item in pairs(mmGlobals.items) do
 		
 		if item.class == "internal" then continue end
 		
@@ -762,7 +764,7 @@ function openStore(len, ply)
 		local toolTip = item.title .. " \n " .. "Cost: " .. tostring(item.cost) .. " Quantity: " .. tostring(item.quantity)
 		
 		local spiBack = vgui.Create("DPanel")
-			  spiBack:SetParent(storeMenu)
+			  spiBack:SetParent(mmGlobals.storeMenu)
 			  spiBack:SetPos( colPad + (colPad + spawnIconWidth) * colCount,
 							  rowPad + titleOffset + ((rowPad + spawnIconHeight) * rowCount ))
 			  spiBack:SetSize(spawnIconWidth, spawnIconWidth)
@@ -813,12 +815,12 @@ function openStore(len, ply)
 	end	
 	
 
-	storeMenu:SizeToChildren(true,true)
-	storeMenu:InvalidateLayout(false)
+	mmGlobals.storeMenu:SizeToChildren(true,true)
+	mmGlobals.storeMenu:InvalidateLayout(false)
 	
-	storeMenu:SetSize(storeMenu:GetWide() + (colPad * 0.5), storeMenu:GetTall() + (rowPad * 0.5))
+	mmGlobals.storeMenu:SetSize(mmGlobals.storeMenu:GetWide() + (colPad * 0.5), mmGlobals.storeMenu:GetTall() + (rowPad * 0.5))
 	
-	storeMenu:SetVerticalScrollbarEnabled(true)
+	mmGlobals.storeMenu:SetVerticalScrollbarEnabled(true)
 	
 end
 net.Receive("open_store", openStore)
@@ -833,8 +835,8 @@ net.Receive("open_help", openHelp)
 
 function openPlayer(len, ply)
 	
-	if playerIsOpen then
-		playerMenu:Remove()
+	if mmGlobals.playerIsOpen then
+		mmGlobals.playerMenu:Remove()
 		return
 	end
 	
@@ -849,17 +851,17 @@ function openPlayer(len, ply)
 	
 	gui.EnableScreenClicker( true )
 	
-	playerIsOpen = true
+	mmGlobals.playerIsOpen = true
 	
-	playerMenu = vgui.Create("DFrame")
-	playerMenu:SetSize(ScrW() * 0.5, ScrH() * 0.5)
-	playerMenu:Center()
-	playerMenu:SetTitle("Murder Maze - Player Options/Info")
-	playerMenu:SetDeleteOnClose(true)
+	mmGlobals.playerMenu = vgui.Create("DFrame")
+	mmGlobals.playerMenu:SetSize(ScrW() * 0.5, ScrH() * 0.5)
+	mmGlobals.playerMenu:Center()
+	mmGlobals.playerMenu:SetTitle("Murder Maze - Player Options/Info")
+	mmGlobals.playerMenu:SetDeleteOnClose(true)
 	local pmPos = {}
 
-	playerMenu.OnRemove = function(self) 
-							playerIsOpen = false
+	mmGlobals.playerMenu.OnRemove = function(self) 
+							mmGlobals.playerIsOpen = false
 							gui.EnableScreenClicker(false) 
 						end
 	
@@ -868,13 +870,13 @@ function openPlayer(len, ply)
 	local lblPlyClr = vgui.Create("DLabel")
 		  lblPlyClr:SetPos(colPad * 1.5, titleOffset + 2)
 		  lblPlyClr:SetText("Player Color")
-		  lblPlyClr:SetParent(playerMenu)
+		  lblPlyClr:SetParent(mmGlobals.playerMenu)
 	
 	
 	totalHorizontalOffset = totalHorizontalOffset +  lblPlyClr:GetWide()
 	
 	local clrPick = vgui.Create("DRGBPicker")
-		  clrPick:SetParent(playerMenu)
+		  clrPick:SetParent(mmGlobals.playerMenu)
 		  clrPick:SetSize((lblPlyClr:GetWide() * 0.9),128)
 		  clrPick:SetPos(colPad + (lblPlyClr:GetWide() * 0.5) - (clrPick:GetWide() * 0.5), titleOffset + lblPlyClr:GetTall())
 		  clrPick.OnChange = function ( self, color )
@@ -887,18 +889,18 @@ function openPlayer(len, ply)
 	local lblPlyMdl = vgui.Create("DLabel")
 		  lblPlyMdl:SetPos((colPad * 2) + lblPlyClr:GetWide(), titleOffset + 2)
 		  lblPlyMdl:SetText("Player Model")
-		  lblPlyMdl:SetParent(playerMenu)
+		  lblPlyMdl:SetParent(mmGlobals.playerMenu)
 
 	
-	local spawnIconWidth = (((playerMenu:GetWide() - totalHorizontalOffset) * 0.5) / maxCols) - rowPad
+	local spawnIconWidth = (((mmGlobals.playerMenu:GetWide() - totalHorizontalOffset) * 0.5) / maxCols) - rowPad
 	local spawnIconHeight = spawnIconWidth
 	
-	for k, plyModel in pairs(males) do
+	for k, plyModel in pairs(mmGlobals.males) do
 			
 		local toolTip = "Male"
 		
 		local spiBack = vgui.Create("DPanel")
-			  spiBack:SetParent(playerMenu)
+			  spiBack:SetParent(mmGlobals.playerMenu)
 			  spiBack:SetPos( lblPlyMdl:GetPos() + (colPad + spawnIconWidth) * colCount,
 							  rowPad + titleOffset + ((rowPad + spawnIconHeight) * rowCount ) + lblPlyMdl:GetTall())
 			  spiBack:SetSize(spawnIconWidth, spawnIconWidth)
@@ -919,6 +921,7 @@ function openPlayer(len, ply)
 										net.SendToServer()
 										timer.Simple(0.1, function()
 											plyPanel:SetModel(LocalPlayer():GetModel())
+											plyPanel.Entity.noDelete = true
 											function plyPanel.Entity:GetPlayerColor() return LocalPlayer():GetPlayerColor() end
 										end)
 									end
@@ -936,12 +939,12 @@ function openPlayer(len, ply)
 	colCount = 0
 	rowCount = 0
 	
-	for k, plyModel in pairs(females) do
+	for k, plyModel in pairs(mmGlobals.females) do
 			
 		local toolTip = "Female"
 		
 		local spiBack = vgui.Create("DPanel")
-			  spiBack:SetParent(playerMenu)
+			  spiBack:SetParent(mmGlobals.playerMenu)
 			  spiBack:SetPos( totalHorizontalOffset + (colPad + spawnIconWidth) * colCount,
 							  rowPad + titleOffset + ((rowPad + spawnIconHeight) * rowCount ) + lblPlyMdl:GetTall())
 			  spiBack:SetSize(spawnIconWidth, spawnIconWidth)
@@ -962,6 +965,7 @@ function openPlayer(len, ply)
 										net.SendToServer()
 										timer.Simple(0.1, function()
 											plyPanel:SetModel(LocalPlayer():GetModel())
+											plyPanel.Entity.noDelete = true
 											function plyPanel.Entity:GetPlayerColor() return LocalPlayer():GetPlayerColor() end
 										end)
 									end
@@ -979,7 +983,7 @@ function openPlayer(len, ply)
 	plyPanel = vgui.Create("DModelPanel")
 	plyPanel:SetPos( totalHorizontalOffset, titleOffset + 2)
 	plyPanel:SetSize(ScrW() / 10, ScrH() * 0.4)
-	plyPanel:SetParent(playerMenu)
+	plyPanel:SetParent(mmGlobals.playerMenu)
 	plyPanel:SetModel(LocalPlayer():GetModel())
 	function plyPanel:LayoutEntity( ent ) ent:SetAngles(Angle(0,45,0)) return end
 	function plyPanel.Entity:GetPlayerColor() return LocalPlayer():GetPlayerColor() end
@@ -989,8 +993,8 @@ function openPlayer(len, ply)
 	plyPanel.Entity.noDelete = true
 				
 			
-	playerMenu:SizeToChildren(true,true)
-	playerMenu:SetSize(playerMenu:GetWide() + colPad, playerMenu:GetTall() + rowPad)
+	mmGlobals.playerMenu:SizeToChildren(true,true)
+	mmGlobals.playerMenu:SetSize(mmGlobals.playerMenu:GetWide() + colPad, mmGlobals.playerMenu:GetTall() + rowPad)
 	
 end
 net.Receive("open_player", openPlayer)
@@ -1065,29 +1069,14 @@ function GM:PostPlayerDraw( ply )
 	
 end
 
-function GM:CalcView(ply, origin, angles, fov, znear, zfar )
-	
-	local view = {}
-	
-	local plyHead = ply:GetPos() + (ply:GetAngles():Up() * 72)
-	
-	if (playerIsOpen) then
-		
-		view.origin = plyHead + (ply:GetForward() * Vector(100,100,0)) 
-		view.angles = ((plyHead + ply:GetRight() * -50) - view.origin):Angle()
-		view.fov = fov
-		view.drawviewer = true
 
-	end
-			
-end
 
 function GM:ScoreboardShow()
 	
 	net.Start("req_scores")
 	net.SendToServer()
 	
-	scores = {}
+	mmGlobals.scores = {}
 	
 	timer.Simple(0.1, doScoreboard)
 	--return false	
@@ -1096,23 +1085,13 @@ end
 
 function doScoreboard()
 		
-	if LocalPlayer():KeyDown(IN_SCORE) && #scores > 0 then
+	if LocalPlayer():KeyDown(IN_SCORE) && #mmGlobals.scores > 0 then
 		
-		if !scoreMenu then
+		if !mmGlobals.scoreMenu then
 		
-			scoreMenu = vgui.Create("DPanel")
-			scoreMenu:SetSize(ScrW() * 0.5, ScrH() * 0.666)
-			--scoreMenu:SetPaintedManually(true)
-			--scoreMenu:SetVerticalScrollbarEnabled(true)
-			--scoreMenu:SetBackgroundBlur( true )
-			--scoreMenu:SetSizable(false)
-			--scoreMenu:SetDraggable(false)
-			--scoreMenu:SetTitle("")
-			--scoreMenu:ShowCloseButton(false)
-			--scoreMenu:SetDeleteOnClose(true)
-	
-			--scoreMenu:SetColor(Color(0,0,0,255))
-			function scoreMenu:Paint()
+			mmGlobals.scoreMenu = vgui.Create("DPanel")
+			mmGlobals.scoreMenu:SetSize(ScrW() * 0.5, ScrH() * 0.666)
+			function mmGlobals.scoreMenu:Paint()
 				
 				draw.RoundedBox(6, 0, 0, self:GetWide(), self:GetTall(), Color(64,64,64,128))
 			
@@ -1134,7 +1113,7 @@ function doScoreboard()
 			local scoresFont = "Trebuchet24"
 			
 			local plyNick = vgui.Create("DLabel")
-				  plyNick:SetParent(scoreMenu)
+				  plyNick:SetParent(mmGlobals.scoreMenu)
 				  plyNick:SetFont(scoresFont)
 				  plyNick:SetSize(nickCol, ySpace * 2)
 				  plyNick:SetPos(x,y)
@@ -1147,7 +1126,7 @@ function doScoreboard()
 			x = x + plyNick:GetWide() + xPad
 			
 			local plyRan = vgui.Create("DLabel")
-				  plyRan:SetParent(scoreMenu)
+				  plyRan:SetParent(mmGlobals.scoreMenu)
 				  plyRan:SetFont(scoresFont)
 				  plyRan:SetSize(runCol, ySpace * 2)
 				  plyRan:SetPos(x,y)
@@ -1158,7 +1137,7 @@ function doScoreboard()
 			x = x + plyRan:GetWide() + xPad
 				  
 			local plyComp = vgui.Create("DLabel")
-				  plyComp:SetParent(scoreMenu)
+				  plyComp:SetParent(mmGlobals.scoreMenu)
 				  plyComp:SetFont(scoresFont)
 				  plyComp:SetSize(compCol, ySpace * 2)
 				  plyComp:SetPos(x,y)
@@ -1169,7 +1148,7 @@ function doScoreboard()
 			x = x + plyComp:GetWide() + xPad
 			
 			local plyIncomp = vgui.Create("DLabel")
-				  plyIncomp:SetParent(scoreMenu)
+				  plyIncomp:SetParent(mmGlobals.scoreMenu)
 				  plyIncomp:SetFont(scoresFont)
 				  plyIncomp:SetSize(incompCol, ySpace * 2)
 				  plyIncomp:SetPos(x,y)
@@ -1180,7 +1159,7 @@ function doScoreboard()
 			x = x + plyIncomp:GetWide() + xPad
 			
 			local plyCredit = vgui.Create("DLabel")
-				  plyCredit:SetParent(scoreMenu)
+				  plyCredit:SetParent(mmGlobals.scoreMenu)
 				  plyCredit:SetFont(scoresFont)
 				  plyCredit:SetSize(creditCol, ySpace * 2)
 				  plyCredit:SetPos(x,y)
@@ -1194,15 +1173,15 @@ function doScoreboard()
 			
 			local divider = vgui.Create("DShape")
 				  divider:SetType("Rect")
-				  divider:SetParent(scoreMenu)
+				  divider:SetParent(mmGlobals.scoreMenu)
 				  divider:SetPos(x,y)
 				  divider:SetColor(Color(160,160,160,196))
 			
 			y = y + (yPad * 2)
 			
-			for k, score in pairs(scores) do
+			for k, score in pairs(mmGlobals.scores) do
 				plyNick = vgui.Create("DLabel")
-				plyNick:SetParent(scoreMenu)
+				plyNick:SetParent(mmGlobals.scoreMenu)
 				plyNick:SetFont(scoresFont)
 				plyNick:SetSize(nickCol, ySpace)
 				plyNick:SetPos(x,y)
@@ -1214,7 +1193,7 @@ function doScoreboard()
 				x = x + plyNick:GetWide() + xPad
 				
 				plyRan = vgui.Create("DLabel")
-				plyRan:SetParent(scoreMenu)
+				plyRan:SetParent(mmGlobals.scoreMenu)
 				plyRan:SetFont(scoresFont)
 				plyRan:SetSize(runCol, ySpace)
 				plyRan:SetPos(x,y)
@@ -1225,7 +1204,7 @@ function doScoreboard()
 				x = x + plyRan:GetWide() + xPad
 					  
 				plyComp = vgui.Create("DLabel")
-				plyComp:SetParent(scoreMenu)
+				plyComp:SetParent(mmGlobals.scoreMenu)
 				plyComp:SetFont(scoresFont)
 				plyComp:SetSize(compCol, ySpace)
 				plyComp:SetPos(x,y)
@@ -1236,7 +1215,7 @@ function doScoreboard()
 				x = x + plyComp:GetWide() + xPad
 				
 				plyIncomp = vgui.Create("DLabel")
-				plyIncomp:SetParent(scoreMenu)
+				plyIncomp:SetParent(mmGlobals.scoreMenu)
 				plyIncomp:SetFont(scoresFont)
 				plyIncomp:SetSize(incompCol, ySpace)
 				plyIncomp:SetPos(x,y)
@@ -1247,7 +1226,7 @@ function doScoreboard()
 				x = x + plyIncomp:GetWide() + xPad
 				
 				plyCredit = vgui.Create("DLabel")
-				plyCredit:SetParent(scoreMenu)
+				plyCredit:SetParent(mmGlobals.scoreMenu)
 				plyCredit:SetFont(scoresFont)
 				plyCredit:SetSize(creditCol, ySpace)
 				plyCredit:SetPos(x,y)
@@ -1259,27 +1238,26 @@ function doScoreboard()
 				x = xPad
 			end
 			
-			scoreMenu:SizeToChildren(true,true)
+			mmGlobals.scoreMenu:SizeToChildren(true,true)
 			
-			scoreMenu:SetSize(scoreMenu:GetWide() + xPad, scoreMenu:GetTall() + yPad)
+			mmGlobals.scoreMenu:SetSize(mmGlobals.scoreMenu:GetWide() + xPad, mmGlobals.scoreMenu:GetTall() + yPad)
 			
-			scoreMenu:SetPos(ScrW() * 0.5 - (scoreMenu:GetWide() * 0.5),
-							 ScrH() * 0.5 - (scoreMenu:GetTall() * 0.5))
+			mmGlobals.scoreMenu:SetPos(ScrW() * 0.5 - (mmGlobals.scoreMenu:GetWide() * 0.5),
+							 ScrH() * 0.5 - (mmGlobals.scoreMenu:GetTall() * 0.5))
 			
-			--scoreMenu:SetPaintBackground(false)
-			divider:SetSize(scoreMenu:GetWide() - (xPad * 2), yPad * 0.5)
+			divider:SetSize(mmGlobals.scoreMenu:GetWide() - (xPad * 2), yPad * 0.5)
 			
 		end
 		
 	else
 		
-		if scoreMenu then
-			if scoreMenu.Close then
-				scoreMenu:Close()
-			elseif scoreMenu.Remove then
-				scoreMenu:Remove()
+		if mmGlobals.scoreMenu then
+			if mmGlobals.scoreMenu.Close then
+				mmGlobals.scoreMenu:Close()
+			elseif mmGlobals.scoreMenu.Remove then
+				mmGlobals.scoreMenu:Remove()
 			end
-			scoreMenu = nil
+			mmGlobals.scoreMenu = nil
 			return
 		end
 		

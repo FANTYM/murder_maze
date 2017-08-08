@@ -44,8 +44,8 @@ function ENT:Draw()
 		
 	local traceData = {}
 		  traceData.start = self:GetPos()
-		  traceData.endpos = traceData.start + Vector( math.sin(math.rad(self:GetShootAngle())) * blockSizes.x, 
-													   math.cos(math.rad(self:GetShootAngle())) * blockSizes.y,
+		  traceData.endpos = traceData.start + Vector( math.sin(math.rad(self:GetShootAngle())) * mmGlobals.blockSizes.x, 
+													   math.cos(math.rad(self:GetShootAngle())) * mmGlobals.blockSizes.y,
 													   math.sin(math.rad(self:GetShootAngle())) * 15 )
 		  traceData.filter = {self}
 		  

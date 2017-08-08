@@ -48,7 +48,7 @@ function ENT:Think()
 	if (self:GetIsExit()) then 
 		
 		
-		exitEnt = self
+		mmGlobals.exitDoorEntity = self
 		
 		if !self.didExitDoorInit then
 			
@@ -76,11 +76,11 @@ function ENT:Draw()
 		
 		self:RemoveAllDecals()
 		
-		render.MaterialOverride( exitMat)
+		render.MaterialOverride( mmGlobals.exitMat)
 		
 		self:DrawModel()
 		
-		render.DrawQuadEasy(self.drawPos, -self:GetForward(), 80 * aspectH, 80 , Color(255,255,255,255), 180)
+		render.DrawQuadEasy(self.drawPos, -self:GetForward(), 80 * mmGlobals.aspectH, 80 , Color(255,255,255,255), 180)
 	  
 		render.MaterialOverride()
 	
