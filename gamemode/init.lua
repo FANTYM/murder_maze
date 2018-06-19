@@ -1127,7 +1127,7 @@ function GM:ShowTeam( ply )
 	
 	net.Start("credit_info")
 		net.WriteInt(ply.credits,32)
-	net.Broadcast()
+	net.Send(ply)
 	
 end
 
